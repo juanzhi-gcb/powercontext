@@ -338,6 +338,21 @@ def cmd_patch(args: argparse.Namespace, settings: Settings) -> int:
     transcript = None
     if response is not None:
         transcript = save_transcript(settings, context["task_id"], response, changes, applied)
+        recorded = settings.evidence_dir / "minimax" / "recorded-response.json"
+        recorded.parent.mkdir(parents=True, exist_ok=True)
+        recorded.write_text(
+            json.dumps(
+                {
+                    "content": response.content,
+                    "model": response.model,
+                    "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "task_id": context["task_id"],
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
     pc = _state_client(settings)
     scope_id = _scope_for(settings, pc, context["task_id"], context["task"])

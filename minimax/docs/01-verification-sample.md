@@ -26,8 +26,8 @@
 |---|---|---|
 | 规格 | `SPEC-ORD-003#R1` 闭区间语义 | `specs/SPEC-ORD-003-min-total.md:20-24` |
 | 规格 | `SPEC-ORD-003#R3` 入参校验 | `specs/SPEC-ORD-003-min-total.md:31-34` |
-| 规格 | `SPEC-ORD-003#R2` 缺省行为 | `specs/SPEC-ORD-003-min-total.md:26-29` |
-| 规格 | `SPEC-ORD-001#R1` 返回范围与排序 | `specs/SPEC-ORD-001-order-listing.md:16-19` |
+| 规格 | `SPEC-ORD-003#R2` 缺省行为 | `specs/SPEC-ORD-003-min-total.md:27-28` |
+| 规格 | `SPEC-ORD-001#R1` 返回范围与排序 | `specs/SPEC-ORD-001-order-listing.md:20-22` |
 | 代码 | `OrderService.list_orders` | `demo_project/ordermesh/service.py:17-50` |
 | 测试 | 6 个目标测试 | `demo_project/tests/test_min_total_filter.py` |
 | 测试 | 7 个回归测试 | `demo_project/tests/test_list_orders_baseline.py` |
