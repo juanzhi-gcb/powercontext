@@ -127,8 +127,12 @@ app.post("/api/search", async (request, response) => {
     // function for a vector.
     result = await collection.hybridSearch({ knn: { queryTexts: query, nResults: k }, nResults: k, include });
   } else {
+    // The full-text branch is expressed as a document filter ($contains -> MATCH ...
+    // AGAINST); passing queryTexts under knn only vectorises text and never builds it.
     result = await collection.hybridSearch({
-      knn: { queryEmbeddings: [embedding], queryTexts: query, nResults: k },
+      query: { whereDocument: { $contains: query }, nResults: k },
+      knn: { queryEmbeddings: [embedding], nResults: k },
+      rank: { rrf: {} },
       nResults: k,
       include,
     });

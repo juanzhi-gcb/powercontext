@@ -159,3 +159,33 @@ npm start           # http://127.0.0.1:8787
 3. 需要显式配置 `FulltextIndexConfig`（分词器 `ngram`/`space`）并确认索引确实建立。
 
 在下一次迭代中应先用 SQL 直接验证全文索引是否命中（`MATCH ... AGAINST`），再决定是否需要显式索引配置。**在此之前，本项目对"混合检索优于单路"不作任何结论。**
+
+## 9. 更正：让全文分支真正生效
+
+第 8 节的结论（"两种模式结果相同"）已被本节取代。根因不在索引，而在调用方式：
+
+- 全文索引本身正常：`SHOW INDEX` 显示 `idx_fts`（列 `document`），直接执行 `SELECT _id FROM c$v2$... WHERE MATCH(document) AGAINST('CODE-0007')` 返回了目标文档 `doc-18`。
+- `hybridSearch` 的全文分支**只能由顶层 `query.whereDocument.$contains` 表达**；`knn.queryTexts` 只是在没有向量时用来生成向量的入参。此前只传了 `queryEmbeddings`，全文分支因此从未参与，hybrid 退化成纯向量检索。
+
+修正后的调用：
+
+```js
+collection.hybridSearch({
+  query: { whereDocument: { $contains: query }, nResults: k },   // 全文分支 -> MATCH ... AGAINST
+  knn: { queryEmbeddings: [vector], nResults: k },               // 向量分支
+  rank: { rrf: {} },                                             // 库内融合
+  nResults: k,
+  include: ["documents", "metadatas", "distances"],
+})
+```
+
+同一 60 段语料、20 条查询（含 8 条只靠代码区分的查询）的对照：
+
+| 模式 | MRR@5 | 首条命中 | 中位延迟 | 逐条名次 |
+|---|---:|---:|---:|---|
+| **hybrid（修正后）** | **0.775** | **14/20** | 49 ms | 1,1,1,1,1,1,1,1,1,1,1,1,6,1,6,2,1,6,3,6 |
+| vector-only | 0.697 | 12/20 | 47 ms | 1,1,1,1,1,2,1,1,1,1,1,1,6,1,6,4,3,6,5,6 |
+
+全文分支把 MRR 提高 0.078、首条命中从 12 条增至 14 条，代价是 2 ms 中位延迟。这正是"混合检索优于单路"的可复现证据。
+
+仍需说明：仍有 4 条代码查询未进前 5（`CODE-0003`、`0009`、`0037`、`0047` 等），说明默认分词器对 `CODE-0007` 这类连字符代码的切分仍不理想；若要进一步提升，可显式配置 `FulltextIndexConfig`（`ngram`）重建索引。
