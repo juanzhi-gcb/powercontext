@@ -14,6 +14,7 @@
 | Node.js | 20 LTS 或更高 |
 | 操作系统 | **Linux**（x64 / arm64）或 macOS（arm64）——seekdb 嵌入式原生绑定只发布这些平台 |
 | 系统库 | Linux 需要 `libaio`：Ubuntu 24.04+ 为 `libaio1t64`，并补一个 `libaio.so.1` 兼容链接 |
+| 网络 | 首次运行需能访问 AWS S3（seekdb 运行时，约 54 MB）与 Hugging Face（模型权重，约 113 MB）；受限网络见下文的环境变量覆盖方式 |
 
 > Windows 用户请在 WSL2（Ubuntu）中运行，浏览器仍使用 Windows 侧的 Chrome/Edge 访问 `http://127.0.0.1:8787`。
 
@@ -30,6 +31,7 @@ sudo ldconfig
 ```bash
 cd stepfun
 npm install
+npm run setup   # 首次运行必须执行：下载 seekdb 原生运行时（见下）
 
 # 开发模式：Vite 前端 + 后端 API（前后端热更新）
 npm run dev
@@ -41,7 +43,23 @@ npm start
 # 打开 http://127.0.0.1:8787
 ```
 
-首次 `npm start` 时，`scripts/with-seekdb-lib.sh` 会在 `~/.seekdb` 下找到原生库并以 `LD_PRELOAD` 方式启动 Node。这是必要的一步：Node 的 `dlopen` 无法为 seekdb 预留的静态 TLS 块分配空间。
+### 首次运行需要下载原生运行时
+
+`seekdb` 的 npm 包里**不含原生代码**，`@seekdb/js-bindings` 会在首次使用时去 AWS 下载一个约 **54 MB** 的运行时归档，缓存到 `~/.seekdb/bindings/<commit>/<platform>/`。
+
+这一步容易失败：SDK 自带的下载没有超时、没有重试、没有进度，线路慢时会在几 MB 处卡住不动，进程静默挂起而不打印任何错误。因此本仓库用 `scripts/ensure-bindings.sh`（`npm run setup`）显式完成下载：`curl -C -` 断点续传、`--retry`、`--max-time`，并在解包后校验 `seekdb.node` 存在。
+
+```bash
+npm run setup
+# 已有缓存时立即返回：seekdb runtime already present: ~/.seekdb/bindings/.../linux-x64
+
+# 线路不通或需要走镜像时：
+SEEKDB_BINDINGS_BASE_URL=https://<mirror>/js-bindings/all_commits/<commit> npm run setup
+```
+
+`npm start` / `npm run dev:server` 启动时会先检查运行时是否就位，缺失就自动调用上面的脚本；脚本失败则**立即报错退出**（`exit 1`）并给出可操作提示，不会挂起。
+
+运行时就位后，`scripts/with-seekdb-lib.sh` 会以 `LD_PRELOAD` 方式加载 `libseekdb.so` 再启动 Node。这是必要的一步：Node 的 `dlopen` 无法为 seekdb 预留的静态 TLS 块分配空间。
 
 数据库文件默认落在 `stepfun/seekdb-data/kb.db`，可用环境变量覆盖：
 

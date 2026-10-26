@@ -88,10 +88,13 @@
 
 ```bash
 npm install
+npm run setup       # 下载 seekdb 原生运行时到 ~/.seekdb（约 54 MB）
 npm run models      # 下载权重到 public/models（约 113 MB）
 npm run build
 npm start           # http://127.0.0.1:8787
 ```
+
+两处下载都有明确失败行为：`npm run setup` 用 `curl -C -` 断点续传并校验产物，失败即 `exit 1`；`npm run models` 同样在缺文件时才会联网。SDK 自带的运行时下载没有超时与进度，线路慢时会静默挂起，故不依赖它。
 
 质量对比：`bench/bench.mjs`（Puppeteer 驱动本机 Chrome/Edge，通过页面暴露的 `window.__kb.Embedder` 依次以 q8 与 fp32 编码同一查询集，输出名次与 MRR）。
 降级验证：同一脚本加 `--disable-gpu` 并在页面启动前把 `navigator.gpu` 置空，确认徽标变为 WASM。

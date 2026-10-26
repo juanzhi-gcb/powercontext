@@ -35,7 +35,20 @@ async function bootstrap() {
   return new SeekdbClient({ path: DB_PATH, database: DB_NAME });
 }
 
-const client = await bootstrap();
+// Registered before the first await: a rejected top-level await would otherwise leave the
+// module half-evaluated and the process exiting with no diagnostic.
+process.on("unhandledRejection", (error) => {
+  console.error("unhandled rejection", error?.message ?? error);
+});
+
+let client;
+try {
+  client = await bootstrap();
+} catch (error) {
+  console.error("seekdb failed to start:", error?.message ?? error);
+  console.error("if this is a fresh clone, run 'npm run setup' first to fetch the native runtime");
+  process.exit(1);
+}
 const collections = new Map();
 
 async function createCollection(name) {
@@ -227,10 +240,8 @@ async function shutdown() {
   process.exit(0);
 }
 
+// Express 4 does not forward rejected async handlers, so unhandled rejections are what a
+// failing request turns into once it escapes route(); they are logged from the handler
+// registered at the top of this module.
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
-// Express 4 does not forward rejected async handlers, and an unhandled rejection would take
-// the whole embedded database process down with it.
-process.on("unhandledRejection", (error) => {
-  console.error("unhandled rejection", error?.message ?? error);
-});
