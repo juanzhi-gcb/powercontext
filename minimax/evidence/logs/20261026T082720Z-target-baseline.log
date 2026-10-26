@@ -1,0 +1,137 @@
+$ /root/mm-live/.venv/bin/python -m pytest -q --no-header -p no:cacheprovider tests/test_min_total_filter.py::test_filtering_keeps_the_newest_first_order tests/test_min_total_filter.py::test_min_total_accepts_a_decimal_string tests/test_min_total_filter.py::test_min_total_composes_with_the_status_filter tests/test_min_total_filter.py::test_min_total_includes_orders_equal_to_the_boundary tests/test_min_total_filter.py::test_negative_min_total_is_rejected tests/test_min_total_filter.py::test_unparseable_min_total_is_rejected
+# cwd: /root/mm-live/demo_project
+# exit: 1
+
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_________________ test_filtering_keeps_the_newest_first_order __________________
+
+service = <ordermesh.service.OrderService object at 0x72974530f950>
+
+    @pytest.mark.spec("SPEC-ORD-003#R4")
+    def test_filtering_keeps_the_newest_first_order(service):
+        orders = service.list_orders("c-1", min_total=Decimal("150"))
+    
+>       assert [order.order_id for order in orders] == ["ORD-1004", "ORD-1003", "ORD-1002"]
+E       AssertionError: assert ['ORD-1003'] == ['ORD-1004', ...', 'ORD-1002']
+E         
+E         At index 0 diff: 'ORD-1003' != 'ORD-1004'
+E         Right contains 2 more items, first extra item: 'ORD-1003'
+E         Use -v to get more diff
+
+tests/test_min_total_filter.py:53: AssertionError
+___________________ test_min_total_accepts_a_decimal_string ____________________
+
+service = <ordermesh.service.OrderService object at 0x72974533d850>
+
+    @pytest.mark.spec("SPEC-ORD-003#R1")
+    def test_min_total_accepts_a_decimal_string(service):
+        orders = service.list_orders("c-1", min_total="150.00")
+    
+>       assert [order.order_id for order in orders] == ["ORD-1004", "ORD-1003", "ORD-1002"]
+E       AssertionError: assert ['ORD-1003'] == ['ORD-1004', ...', 'ORD-1002']
+E         
+E         At index 0 diff: 'ORD-1003' != 'ORD-1004'
+E         Right contains 2 more items, first extra item: 'ORD-1003'
+E         Use -v to get more diff
+
+tests/test_min_total_filter.py:27: AssertionError
+________________ test_min_total_composes_with_the_status_filter ________________
+
+service = <ordermesh.service.OrderService object at 0x72974533d130>
+
+    @pytest.mark.spec("SPEC-ORD-003#R1")
+    def test_min_total_composes_with_the_status_filter(service):
+        orders = service.list_orders("c-1", status=OrderStatus.PAID, min_total="150")
+    
+>       assert [order.order_id for order in orders] == ["ORD-1002"]
+E       AssertionError: assert [] == ['ORD-1002']
+E         
+E         Right contains one more item: 'ORD-1002'
+E         Use -v to get more diff
+
+tests/test_min_total_filter.py:46: AssertionError
+_____________ test_min_total_includes_orders_equal_to_the_boundary _____________
+
+service = <ordermesh.service.OrderService object at 0x72974533e000>
+
+    @pytest.mark.spec("SPEC-ORD-003#R1")
+    def test_min_total_includes_orders_equal_to_the_boundary(service):
+        orders = service.list_orders("c-1", min_total=Decimal("150.00"))
+    
+>       assert [order.order_id for order in orders] == ["ORD-1004", "ORD-1003", "ORD-1002"]
+E       AssertionError: assert ['ORD-1003'] == ['ORD-1004', ...', 'ORD-1002']
+E         
+E         At index 0 diff: 'ORD-1003' != 'ORD-1004'
+E         Right contains 2 more items, first extra item: 'ORD-1003'
+E         Use -v to get more diff
+
+tests/test_min_total_filter.py:20: AssertionError
+_____________________ test_negative_min_total_is_rejected ______________________
+
+service = <ordermesh.service.OrderService object at 0x72974533e240>
+
+    @pytest.mark.spec("SPEC-ORD-003#R3")
+    def test_negative_min_total_is_rejected(service):
+>       with pytest.raises(ValueError, match="min_total"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_min_total_filter.py:32: Failed
+____________________ test_unparseable_min_total_is_rejected ____________________
+
+service = <ordermesh.service.OrderService object at 0x72974533ee10>
+
+    @pytest.mark.spec("SPEC-ORD-003#R3")
+    def test_unparseable_min_total_is_rejected(service):
+        with pytest.raises(ValueError, match="min_total"):
+>           service.list_orders("c-1", min_total="not-a-number")
+
+tests/test_min_total_filter.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ordermesh.service.OrderService object at 0x72974533ee10>
+customer_id = 'c-1', status = None, min_total = 'not-a-number'
+
+    def list_orders(
+        self,
+        customer_id: str,
+        status: OrderStatus | str | None = None,
+        min_total: Decimal | int | str | None = None,
+    ) -> list[Order]:
+        """Return one customer's orders, newest first.
+    
+        ``status`` keeps only orders in that lifecycle state. ``min_total`` is the
+        optional lower bound for the order total; the exact boundary semantics
+        are owned by SPEC-ORD-003.
+    
+        Raises:
+            ValueError: when ``status`` is not a known order status.
+        """
+    
+        orders = self._repository.list_for_customer(customer_id)
+    
+        if status is not None:
+            if not isinstance(status, OrderStatus):
+                try:
+                    status = OrderStatus(status)
+                except ValueError as exc:
+                    raise ValueError(f"unknown status: {status!r}") from exc
+            orders = [order for order in orders if order.status is status]
+    
+        if min_total is not None:
+            # TODO(SPEC-ORD-003): the lower bound is exclusive today and negative
+            # input is not validated yet.
+>           threshold = min_total if isinstance(min_total, Decimal) else Decimal(min_total)
+                                                                         ^^^^^^^^^^^^^^^^^^
+E           decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+
+ordermesh/service.py:46: InvalidOperation
+=========================== short test summary info ============================
+FAILED tests/test_min_total_filter.py::test_filtering_keeps_the_newest_first_order
+FAILED tests/test_min_total_filter.py::test_min_total_accepts_a_decimal_string
+FAILED tests/test_min_total_filter.py::test_min_total_composes_with_the_status_filter
+FAILED tests/test_min_total_filter.py::test_min_total_includes_orders_equal_to_the_boundary
+FAILED tests/test_min_total_filter.py::test_negative_min_total_is_rejected - ...
+FAILED tests/test_min_total_filter.py::test_unparseable_min_total_is_rejected
+6 failed in 0.03s
