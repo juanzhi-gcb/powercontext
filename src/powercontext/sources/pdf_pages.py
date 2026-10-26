@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import hashlib
 import io
+import math
 import re
+from collections import Counter
 from itertools import combinations
 from typing import TYPE_CHECKING
 from urllib.parse import quote
@@ -132,20 +134,27 @@ async def search_pdf_pages(
     from powercontext.artifacts import MemoryCitation as Citation
     from powercontext.builtin.runtime.models import GetMemoryEntryRequest, SearchMemoryRequest
 
-    scored: dict[tuple[str, str, str], tuple[float, MemoryHit]] = {}
+    scored: dict[tuple[str, str, str], MemoryHit] = {}
     for subquery in _subqueries(terms):
         page = await memory.search(SearchMemoryRequest(query=subquery, mode="fts", limit=_HITS_PER_QUERY))  # type: ignore[attr-defined]
         for hit in page.hits:
             identifier = (hit.memory_ref.artifact_id, hit.entry_id, hit.entry_version_id)
-            score = _coverage(terms, hit.text)
-            current = scored.get(identifier)
-            if current is None or score > current[0]:
-                scored[identifier] = (score, hit)
+            scored.setdefault(identifier, hit)
 
-    ranked = sorted(scored.values(), key=lambda item: (-item[0], item[1].entry_id))[:_MAX_CANDIDATES]
+    if not scored:
+        return ()
+    hits = tuple(scored.values())
+    scores = _bm25_scores(terms, tuple(hit.text for hit in hits))
+    ordered = [
+        hit
+        for _score, hit in sorted(
+            zip(scores, hits, strict=True),
+            key=lambda pair: (-pair[0], pair[1].entry_id),
+        )
+    ][:_MAX_CANDIDATES]
     citations: list[MemoryCitation] = []
     seen_pages: set[str] = set()
-    for _score, hit in ranked:
+    for hit in ordered:
         citation = Citation(
             memory_ref=hit.memory_ref,
             entry_id=hit.entry_id,
@@ -232,23 +241,46 @@ def _question_terms(question: str, /) -> tuple[str, ...]:
         if term in _STOPWORDS or len(term) < 2 or term in terms:
             continue
         terms.append(term)
-    return tuple(terms[:_MAX_QUERY_TERMS])
+    return tuple(terms)
 
 
 def _subqueries(terms: tuple[str, ...]) -> tuple[str, ...]:
     """Ask several two-term questions because long FTS queries are admitted too sparsely."""
 
-    queries = [" ".join(pair) for pair in combinations(terms, 2)]
-    queries.extend(terms)
+    focused = terms[:_MAX_QUERY_TERMS]
+    queries = [" ".join(pair) for pair in combinations(focused, 2)]
+    queries.extend(focused)
     return tuple(queries)
 
 
-def _coverage(terms: tuple[str, ...], text: str, /) -> float:
-    wanted = set(terms)
-    present = wanted.intersection(_TERM_PATTERN.findall(text.lower()))
-    if not present:
-        return 0.0
-    return len(present) / len(wanted)
+def _bm25_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[float]:
+    """Rank candidate pages with BM25 so rare question terms dominate boilerplate."""
+
+    token_lists = [_TERM_PATTERN.findall(text.lower()) for text in texts]
+    total = len(token_lists)
+    if not total:
+        return []
+    average_length = sum(len(tokens) for tokens in token_lists) / total
+    document_frequency: dict[str, int] = {}
+    for tokens in token_lists:
+        for term in set(tokens):
+            document_frequency[term] = document_frequency.get(term, 0) + 1
+    idf = {
+        term: math.log(1 + (total - document_frequency.get(term, 0) + 0.5) / (document_frequency.get(term, 0) + 0.5))
+        for term in set(terms)
+    }
+    scores: list[float] = []
+    for tokens in token_lists:
+        counts = Counter(tokens)
+        length = len(tokens) or 1
+        normalizer = 1.2 * (1 - 0.75 + 0.75 * length / max(average_length, 1.0))
+        score = 0.0
+        for term in terms:
+            frequency = counts.get(term, 0)
+            if frequency:
+                score += idf.get(term, 0.0) * frequency * 2.2 / (frequency + normalizer)
+        scores.append(score)
+    return scores
 
 
 __all__ = [
