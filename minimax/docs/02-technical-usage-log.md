@@ -172,6 +172,19 @@ SELECT src_id, dst_id, kind
 | 导入结果 | `evidence/logs/ingest-15a13dcd2b87498e.json` |
 | OceanBase 直连模式 | 另测 `SDDCTX_DB_MODE=server` + `mysql://root@127.0.0.1:2881/sdd_context`，同样建表并导入 43 个文档 |
 
+### 2.4 规格更新后上下文随之变化
+
+在干净检出（修改前状态）上执行 `scripts/update_spec_demo.sh`：在 `SPEC-ORD-003 R1` 末尾追加
+一条规则后重新 `ingest`，只有该条目被更新：
+
+```
+revisions bumped: spec:SPEC-ORD-003#R1
+revision: 1 -> 2
+requirement now ends with: 示例变更新增：`min_total` 允许带千分位分隔符（例如 `"1,500.00"`），解析前必须先去掉逗号。
+```
+
+完整输出与前后两份上下文包：`evidence/spec-update/`。脚本退出时会把规格恢复并再次导入。
+
 ## 3. PowerContext 使用记录
 
 ### 3.1 Scope 与状态序列

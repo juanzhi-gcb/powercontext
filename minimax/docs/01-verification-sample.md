@@ -78,6 +78,8 @@ bash scripts/run_sample.sh --replay              # 重新开始
 
 | 证据 | 路径 |
 |---|---|
+| 任务上下文包（修改前生成） | `evidence/context/task-b5160ce9c9.json` |
+| 规格更新前后的上下文 | `evidence/spec-update/context-before.json`、`context-after.json`、`spec-update-demo.log` |
 | 修改前/后代码快照 | `evidence/code/before/`、`evidence/code/after/` |
 | 代码差异 | `evidence/changes/<task>.patch` |
 | 目标/回归测试日志（含命令与退出码） | `evidence/logs/*-target*.log`、`evidence/logs/*-regression.log` |
