@@ -52,8 +52,38 @@ _STOPWORDS = frozenset(
     }
 )
 _MAX_QUERY_TERMS = 8
-_HITS_PER_QUERY = 40
-_MAX_CANDIDATES = 80
+_HITS_PER_QUERY = 100
+_MAX_CANDIDATES = 200
+_HEADING_CHARS = 300
+_RRF_OFFSET = 60
+_RRF_WEIGHT = 0.6
+_EXPANDED_TERM_LIMIT = 10
+
+# Financial-report questions rarely repeat the filing's own vocabulary: a question about
+# "geographies" is answered by a page that lists countries and businesses. Expanding a few
+# leading terms with their filing vocabulary keeps lexical retrieval usable without a model.
+_EXPANSIONS: dict[str, tuple[str, ...]] = {
+    "geographies": ("geographic", "regions", "countries", "markets", "segments"),
+    "geography": ("geographic", "regions", "countries", "markets", "segments"),
+    "operates": ("businesses", "segments", "operations"),
+    "operating": ("operations", "income"),
+    "legal": ("litigation", "proceedings", "claims", "regulatory", "matters"),
+    "battles": ("litigation", "proceedings", "claims", "disputes"),
+    "lawsuit": ("litigation", "proceedings", "claims"),
+    "litigation": ("proceedings", "claims", "regulatory"),
+    "revenue": ("sales", "net"),
+    "sales": ("revenue", "net"),
+    "capex": ("capital", "expenditures", "property"),
+    "ebitda": ("operating", "income", "depreciation", "amortization"),
+    "margin": ("profit", "income", "sales"),
+    "restructuring": ("charges", "severance", "productivity"),
+    "employees": ("workforce", "personnel"),
+    "debt": ("borrowings", "notes", "obligations"),
+    "dividends": ("payout", "repurchase"),
+    "risk": ("uncertainties", "factors"),
+    "acquisitions": ("acquired", "divestitures", "transaction"),
+    "climate": ("environmental", "emissions", "sustainability"),
+}
 
 
 class PDFDocumentInput(BaseModel):
@@ -131,20 +161,31 @@ async def search_pdf_pages(
     terms = _question_terms(question)
     if not terms:
         return ()
+    expanded = _expand_terms(terms)
     from powercontext.artifacts import MemoryCitation as Citation
     from powercontext.builtin.runtime.models import GetMemoryEntryRequest, SearchMemoryRequest
 
-    scored: dict[tuple[str, str, str], MemoryHit] = {}
-    for subquery in _subqueries(terms):
+    scored: dict[tuple[str, str, str], tuple[MemoryHit, float]] = {}
+    for subquery in _subqueries(expanded, question):
         page = await memory.search(SearchMemoryRequest(query=subquery, mode="fts", limit=_HITS_PER_QUERY))  # type: ignore[attr-defined]
-        for hit in page.hits:
+        for rank, hit in enumerate(page.hits, start=1):
             identifier = (hit.memory_ref.artifact_id, hit.entry_id, hit.entry_version_id)
-            scored.setdefault(identifier, hit)
+            current = scored.get(identifier)
+            contribution = 1.0 / (_RRF_OFFSET + rank)
+            if current is None:
+                scored[identifier] = (hit, contribution)
+            else:
+                scored[identifier] = (current[0], current[1] + contribution)
 
     if not scored:
         return ()
-    hits = tuple(scored.values())
-    scores = _bm25_scores(terms, tuple(hit.text for hit in hits))
+    hits = tuple(hit for hit, _ in scored.values())
+    fused = tuple(contribution for _, contribution in scored.values())
+    lexical = _rank_scores(expanded, tuple(hit.text for hit in hits))
+    scores = [
+        lexical[index] / max(lexical) + _RRF_WEIGHT * fused[index] / max(fused)
+        for index in range(len(hits))
+    ]
     ordered = [
         hit
         for _score, hit in sorted(
@@ -244,17 +285,31 @@ def _question_terms(question: str, /) -> tuple[str, ...]:
     return tuple(terms)
 
 
-def _subqueries(terms: tuple[str, ...]) -> tuple[str, ...]:
-    """Ask several two-term questions because long FTS queries are admitted too sparsely."""
+def _expand_terms(terms: tuple[str, ...], /) -> tuple[str, ...]:
+    expanded = list(terms)
+    for term in terms[:6]:
+        for synonym in _EXPANSIONS.get(term, ()):
+            if synonym not in expanded:
+                expanded.append(synonym)
+    return tuple(expanded)
 
-    focused = terms[:_MAX_QUERY_TERMS]
+
+def _subqueries(terms: tuple[str, ...], question: str, /) -> tuple[str, ...]:
+    """Ask several short questions because long FTS queries are admitted too sparsely."""
+
+    focused = terms[:_EXPANDED_TERM_LIMIT]
     queries = [" ".join(pair) for pair in combinations(focused, 2)]
     queries.extend(focused)
+    queries.append(question)
     return tuple(queries)
 
 
-def _bm25_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[float]:
-    """Rank candidate pages with BM25 so rare question terms dominate boilerplate."""
+def _rank_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[float]:
+    """Rank pages by BM25 plus heading position and rare-term presence.
+
+    Financial reports carry the section title at the top of a page, so a query term in the
+    leading text is stronger evidence than the same term deep inside a table.
+    """
 
     token_lists = [_TERM_PATTERN.findall(text.lower()) for text in texts]
     total = len(token_lists)
@@ -269,8 +324,9 @@ def _bm25_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[floa
         term: math.log(1 + (total - document_frequency.get(term, 0) + 0.5) / (document_frequency.get(term, 0) + 0.5))
         for term in set(terms)
     }
+    rarest = sorted(set(terms), key=lambda term: -idf.get(term, 0.0))[:3]
     scores: list[float] = []
-    for tokens in token_lists:
+    for original, tokens in zip(texts, token_lists, strict=True):
         counts = Counter(tokens)
         length = len(tokens) or 1
         normalizer = 1.2 * (1 - 0.75 + 0.75 * length / max(average_length, 1.0))
@@ -279,6 +335,11 @@ def _bm25_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[floa
             frequency = counts.get(term, 0)
             if frequency:
                 score += idf.get(term, 0.0) * frequency * 2.2 / (frequency + normalizer)
+        heading = set(_TERM_PATTERN.findall(original[:_HEADING_CHARS].lower()))
+        score += 0.8 * sum(idf.get(term, 0.0) for term in terms if term in heading)
+        if rarest:
+            covered = sum(1 for term in rarest if counts.get(term))
+            score += 1.5 * covered / len(rarest) * idf.get(rarest[0], 0.0)
         scores.append(score)
     return scores
 
