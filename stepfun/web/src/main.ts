@@ -15,6 +15,7 @@ const METRIC_ROWS = [
 
 const elements = {
   files: document.querySelector<HTMLInputElement>("#files")!,
+  collection: document.querySelector<HTMLInputElement>("#collection")!,
   importButton: document.querySelector<HTMLButtonElement>("#import")!,
   progress: document.querySelector<HTMLProgressElement>("#progress")!,
   importStatus: document.querySelector<HTMLParagraphElement>("#importStatus")!,
@@ -28,6 +29,11 @@ const elements = {
   dtype: document.querySelector<HTMLSpanElement>("#dtype")!,
   resetButton: document.querySelector<HTMLButtonElement>("#reset")!,
 };
+
+function activeCollection(): string {
+  const name = elements.collection.value.trim();
+  return name === "" ? "documents" : name;
+}
 
 const metrics = new Map<string, string>();
 
@@ -138,7 +144,7 @@ elements.importButton.addEventListener("click", async () => {
       embedding: vectors[index],
       metadata: { source: sources[index], chunk: index },
     }));
-    const write = await importDocuments(documents);
+    const write = await importDocuments(documents, activeCollection());
     recordMetric("写入 seekdb", `${write.ms.toFixed(0)} ms / ${write.written} 段`);
     elements.importStatus.textContent = `已写入 ${write.written} 段，可以检索了。`;
   } catch (error) {
@@ -159,7 +165,7 @@ elements.searchButton.addEventListener("click", async () => {
     const embedMs = performance.now() - embedStart;
     recordMetric("查询向量化", `${embedMs.toFixed(0)} ms`);
 
-    const response = await search(query, vector, 5);
+    const response = await search(query, vector, 5, activeCollection());
     recordMetric("seekdb 混合检索（服务端计时）", `${response.ms.toFixed(0)} ms`);
     renderHits(response.hits);
     recordMetric("端到端（点击检索 → 结果渲染）", `${(performance.now() - endToEndStart).toFixed(0)} ms`);
@@ -172,7 +178,7 @@ elements.searchButton.addEventListener("click", async () => {
 });
 
 elements.resetButton.addEventListener("click", async () => {
-  await reset();
+  await reset(activeCollection());
   elements.results.innerHTML = "";
   elements.importStatus.textContent = "知识库已清空。";
   metrics.clear();

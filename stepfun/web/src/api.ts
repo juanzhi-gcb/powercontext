@@ -30,18 +30,19 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
-export function importDocuments(documents: ImportDocument[]) {
-  return post<{ written: number; ms: number }>("/api/import", { documents });
+export function importDocuments(documents: ImportDocument[], collection: string) {
+  return post<{ written: number; ms: number; collection: string }>("/api/import", { documents, collection });
 }
 
-export function search(query: string, embedding: number[], k: number) {
-  return post<SearchResponse>("/api/search", { query, embedding, k });
+export function search(query: string, embedding: number[], k: number, collection: string, mode = "hybrid") {
+  return post<SearchResponse & { collection: string }>("/api/search", { query, embedding, k, collection, mode });
 }
 
-export function reset() {
-  return post<{ ok: boolean }>("/api/reset", {});
+export function reset(collection: string) {
+  return post<{ ok: boolean; collection: string }>("/api/reset", { collection });
 }
 
-export function health() {
-  return fetch("/api/health").then((response) => response.json());
+export function health(collection?: string) {
+  const suffix = collection ? `?collection=${encodeURIComponent(collection)}` : "";
+  return fetch(`/api/health${suffix}`).then((response) => response.json());
 }

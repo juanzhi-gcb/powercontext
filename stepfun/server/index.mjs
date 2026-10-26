@@ -10,9 +10,10 @@ const PORT = Number(process.env.PORT ?? 8787);
 const DIMENSION = Number(process.env.EMBED_DIMENSION ?? 384);
 const DB_PATH = process.env.SEEPDB_PATH ?? path.join(root, "seekdb-data", "kb.db");
 const DB_NAME = process.env.SEEPDB_DATABASE ?? "kb";
-const COLLECTION = process.env.SEEPDB_COLLECTION ?? "documents";
+const DEFAULT_COLLECTION = process.env.SEEPDB_COLLECTION ?? "documents";
 const FULLTEXT_ANALYZER = process.env.SEEPDB_FULLTEXT_ANALYZER ?? "ngram";
 const ADD_BATCH = Number(process.env.SEEPDB_ADD_BATCH ?? 64);
+const COLLECTION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
 // The browser owns the model, so the server never embeds anything. The collection still
 // requires an embedding-function handle for its schema, and this one refuses to run.
@@ -27,63 +28,84 @@ const browserEmbedding = {
   },
 };
 
-async function openCollection() {
+async function bootstrap() {
   const admin = new SeekdbAdminClient({ path: DB_PATH });
   await admin.createDatabase(DB_NAME);
   await admin.close();
-
-  const client = new SeekdbClient({ path: DB_PATH, database: DB_NAME });
-  let collection;
-  try {
-    collection = await client.getCollection({ name: COLLECTION, embeddingFunction: browserEmbedding });
-  } catch {
-    try {
-      // The default analyzer splits "CODE-0007" into generic words and digits, which makes
-      // exact-token queries indistinguishable. The ngram analyzer indexes character n-grams
-      // so such identifiers stay matchable.
-      const schema = new Schema({ fulltextIndex: new FulltextIndexConfig(FULLTEXT_ANALYZER) });
-      collection = await client.createCollection({
-        name: COLLECTION,
-        dimension: DIMENSION,
-        distance: "cosine",
-        schema,
-        embeddingFunction: browserEmbedding,
-      });
-    } catch (error) {
-      console.error("schema with analyzer rejected, falling back to the default:", error?.message ?? error);
-      collection = await client.createCollection({
-        name: COLLECTION,
-        dimension: DIMENSION,
-        distance: "cosine",
-        embeddingFunction: browserEmbedding,
-      });
-    }
-  }
-  return { client, collection };
+  return new SeekdbClient({ path: DB_PATH, database: DB_NAME });
 }
 
-const { client, collection } = await openCollection();
+const client = await bootstrap();
+const collections = new Map();
+
+async function createCollection(name) {
+  try {
+    // The default analyzer splits "CODE-0007" into generic words and digits, which makes
+    // exact-token queries indistinguishable. The ngram analyzer indexes character n-grams
+    // so such identifiers stay matchable.
+    const schema = new Schema({ fulltextIndex: new FulltextIndexConfig(FULLTEXT_ANALYZER) });
+    return await client.createCollection({
+      name,
+      dimension: DIMENSION,
+      distance: "cosine",
+      schema,
+      embeddingFunction: browserEmbedding,
+    });
+  } catch (error) {
+    console.error(`schema with analyzer rejected for ${name}, falling back:`, error?.message ?? error);
+    return client.createCollection({
+      name,
+      dimension: DIMENSION,
+      distance: "cosine",
+      embeddingFunction: browserEmbedding,
+    });
+  }
+}
+
+async function useCollection(request) {
+  const name = String(request.body?.collection ?? request.query?.collection ?? DEFAULT_COLLECTION);
+  if (!COLLECTION_PATTERN.test(name)) {
+    throw Object.assign(new Error(`invalid collection name: ${name}`), { status: 400 });
+  }
+  if (!collections.has(name)) {
+    let collection;
+    try {
+      collection = await client.getCollection({ name, embeddingFunction: browserEmbedding });
+    } catch {
+      collection = await createCollection(name);
+    }
+    collections.set(name, collection);
+  }
+  return { name, collection: collections.get(name) };
+}
+
 const app = express();
 app.use(express.json({ limit: "64mb" }));
 
-app.get("/api/health", async (_request, response) => {
-  let documents = null;
-  try {
-    const rows = await client.execute(`SELECT COUNT(*) AS total FROM \`${COLLECTION}\``);
-    documents = Number(rows?.[0]?.total ?? 0);
-  } catch {
-    documents = null;
-  }
+function route(handler) {
+  return (request, response) => {
+    Promise.resolve(handler(request, response)).catch((error) => {
+      console.error("request failed", error?.message ?? error);
+      if (!response.headersSent) {
+        response.status(error?.status ?? 500).json({ error: String(error?.message ?? error) });
+      }
+    });
+  };
+}
+
+app.get("/api/health", route(async (request, response) => {
   response.json({
     ok: true,
     database: DB_NAME,
-    collection: COLLECTION,
+    defaultCollection: DEFAULT_COLLECTION,
+    analyzer: FULLTEXT_ANALYZER,
     dimension: DIMENSION,
-    documents,
+    collections: [...new Set([DEFAULT_COLLECTION, ...collections.keys()])],
+    active: String(request.query?.collection ?? DEFAULT_COLLECTION),
   });
-});
+}));
 
-app.post("/api/import", async (request, response) => {
+app.post("/api/import", route(async (request, response) => {
   const items = Array.isArray(request.body?.documents) ? request.body.documents : [];
   if (items.length === 0) {
     response.status(400).json({ error: "documents must be a non-empty array" });
@@ -101,6 +123,7 @@ app.post("/api/import", async (request, response) => {
     }
   }
 
+  const { name, collection } = await useCollection(request);
   const started = performance.now();
   let written = 0;
   try {
@@ -120,31 +143,28 @@ app.post("/api/import", async (request, response) => {
     response.status(500).json({ error: `write failed: ${error?.message ?? error}` });
     return;
   }
-  response.json({ written, ms: performance.now() - started });
-});
+  response.json({ collection: name, written, ms: performance.now() - started });
+}));
 
-app.post("/api/search", async (request, response) => {
+app.post("/api/search", route(async (request, response) => {
   const query = request.body?.query;
   const embedding = request.body?.embedding;
+  const mode = String(request.body?.mode ?? "hybrid");
   const k = Math.min(Math.max(Number(request.body?.k ?? 5), 1), 50);
   if (typeof query !== "string" || query.trim() === "" || !Array.isArray(embedding)) {
     response.status(400).json({ error: "query and embedding are required" });
     return;
   }
 
-  const started = performance.now();
-  const mode = String(request.body?.mode ?? "hybrid");
+  const { name, collection } = await useCollection(request);
   const include = ["documents", "metadatas", "distances"];
+  const started = performance.now();
   let result;
   if (mode === "vector") {
     result = await collection.query({ queryEmbeddings: [embedding], nResults: k, include });
-  } else if (mode === "fts") {
-    // Only the keyword branch participates, so the collection never asks the embedding
-    // function for a vector.
-    result = await collection.hybridSearch({ knn: { queryTexts: query, nResults: k }, nResults: k, include });
   } else {
     // The full-text branch is expressed as a document filter ($contains -> MATCH ...
-    // AGAINST); passing queryTexts under knn only vectorises text and never builds it.
+    // AGAINST); queryTexts under knn only vectorises text and never builds it.
     result = await collection.hybridSearch({
       query: { whereDocument: { $contains: query }, nResults: k },
       knn: { queryEmbeddings: [embedding], nResults: k },
@@ -153,6 +173,8 @@ app.post("/api/search", async (request, response) => {
       include,
     });
   }
+  const ms = performance.now() - started;
+
   const isNested = Array.isArray(result.ids?.[0]);
   const ids = (isNested ? result.ids[0] : result.ids) ?? [];
   const documents = (isNested ? result.documents?.[0] : result.documents) ?? [];
@@ -160,7 +182,8 @@ app.post("/api/search", async (request, response) => {
   const distances = (isNested ? result.distances?.[0] : result.distances) ?? [];
 
   response.json({
-    ms: performance.now() - started,
+    collection: name,
+    ms,
     hits: ids.map((id, index) => ({
       id,
       text: documents[index] ?? "",
@@ -168,19 +191,15 @@ app.post("/api/search", async (request, response) => {
       distance: distances[index] ?? null,
     })),
   });
-});
+}));
 
-app.post("/api/reset", async (_request, response) => {
+app.post("/api/reset", route(async (request, response) => {
+  const { name, collection } = await useCollection(request);
   await collection.delete();
-  const recreated = await client.createCollection({
-    name: COLLECTION,
-    dimension: DIMENSION,
-    distance: "cosine",
-    embeddingFunction: browserEmbedding,
-  });
-  Object.assign(collection, recreated);
-  response.json({ ok: true });
-});
+  collections.delete(name);
+  await useCollection(request);
+  response.json({ ok: true, collection: name });
+}));
 
 // onnxruntime-web ships its wasm loaders in node_modules; serving them here removes the
 // CDN dependency of the browser runtime.
@@ -195,7 +214,7 @@ app.get("*", (_request, response) => {
 
 const server = app.listen(PORT, () => {
   console.log(`seekdb mini knowledge base listening on http://127.0.0.1:${PORT}`);
-  console.log(`database=${DB_PATH} collection=${COLLECTION} dimension=${DIMENSION}`);
+  console.log(`database=${DB_PATH} analyzer=${FULLTEXT_ANALYZER} dimension=${DIMENSION}`);
 });
 
 async function shutdown() {
