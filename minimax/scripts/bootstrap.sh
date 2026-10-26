@@ -9,16 +9,28 @@ if [[ -n "${PIP_INDEX_URL:-}" ]]; then
   INDEX_ARGS=(--index-url "$PIP_INDEX_URL")
 fi
 
+UV_BIN=""
+if command -v uv >/dev/null 2>&1; then
+  UV_BIN="$(command -v uv)"
+elif [[ -x "${HOME}/.local/bin/uv" ]]; then
+  UV_BIN="${HOME}/.local/bin/uv"
+fi
+
 if [[ ! -x .venv/bin/python ]]; then
-  if command -v uv >/dev/null 2>&1; then
-    uv venv --python 3.12 .venv
+  if [[ -n "$UV_BIN" ]]; then
+    # uv can fetch a managed CPython when the system one lacks venv support.
+    "$UV_BIN" venv --python "${SDDCTX_PYTHON:-3.12}" .venv
   else
-    "$PYTHON_BIN" -m venv .venv
+    if ! "$PYTHON_BIN" -m venv .venv; then
+      echo "python3 -m venv failed." >&2
+      echo "Install python3-venv (Debian/Ubuntu) or uv (https://docs.astral.sh/uv/), then retry." >&2
+      exit 1
+    fi
   fi
 fi
 
-if command -v uv >/dev/null 2>&1; then
-  uv pip install --python .venv/bin/python "${INDEX_ARGS[@]}" -r requirements.txt
+if [[ -n "$UV_BIN" ]]; then
+  "$UV_BIN" pip install --python .venv/bin/python "${INDEX_ARGS[@]}" -r requirements.txt
 else
   .venv/bin/python -m pip install --upgrade pip
   .venv/bin/python -m pip install "${INDEX_ARGS[@]}" -r requirements.txt
