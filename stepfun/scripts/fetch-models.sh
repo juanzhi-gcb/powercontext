@@ -26,6 +26,8 @@ fetch tokenizer.json
 fetch tokenizer_config.json
 fetch onnx/model_quantized.onnx
 fetch onnx/model.onnx
+# fp16 is the fastest precision on WebGPU for this model; the benchmark compares it with int8.
+fetch onnx/model_fp16.onnx
 
 echo "models ready in $DEST"
 du -sh "$DEST"

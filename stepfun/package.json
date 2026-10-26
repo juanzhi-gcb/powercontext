@@ -11,6 +11,8 @@
     "build": "vite build",
     "start": "npm run build && sh scripts/with-seekdb-lib.sh server/index.mjs",
     "benchmark": "node bench/bench.mjs",
+    "bench:matrix": "node bench/matrix.mjs",
+    "bench:sweep": "node bench/sweep.mjs",
     "typecheck": "tsc --noEmit",
     "models": "sh scripts/fetch-models.sh",
     "setup": "sh scripts/ensure-bindings.sh"
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "concurrently": "^9.1.2",
+    "puppeteer-core": "^24.10.2",
     "typescript": "^5.7.3"
   }
 }

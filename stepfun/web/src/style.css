@@ -46,6 +46,25 @@ input[type="text"], input[type="file"] {
   border: 1px solid #2a3555; background: #0f1526; color: var(--text); font-size: 14px;
 }
 
+select {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid #2a3555;
+  background: #0f1526; color: var(--text); font-size: 14px;
+}
+
+.field { display: flex; align-items: center; gap: 8px; }
+.field span { color: var(--muted); font-size: 13px; }
+.field input { flex: 0 0 180px; min-width: 140px; }
+
+.banner {
+  max-width: 1020px; margin: 0 auto 16px; padding: 10px 14px; border-radius: 10px;
+  background: #2f2413; border: 1px solid #5c4a1f; color: var(--warn); font-size: 13px;
+}
+
+code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px; background: #0f1526; padding: 1px 5px; border-radius: 5px;
+}
+
 button {
   padding: 10px 16px; border-radius: 10px; border: 0; cursor: pointer;
   background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
