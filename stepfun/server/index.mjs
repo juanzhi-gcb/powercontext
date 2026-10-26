@@ -117,11 +117,22 @@ app.post("/api/search", async (request, response) => {
   }
 
   const started = performance.now();
-  const result = await collection.hybridSearch({
-    knn: { queryEmbeddings: [embedding], queryTexts: query, nResults: k },
-    nResults: k,
-    include: ["documents", "metadatas", "distances"],
-  });
+  const mode = String(request.body?.mode ?? "hybrid");
+  const include = ["documents", "metadatas", "distances"];
+  let result;
+  if (mode === "vector") {
+    result = await collection.query({ queryEmbeddings: [embedding], nResults: k, include });
+  } else if (mode === "fts") {
+    // Only the keyword branch participates, so the collection never asks the embedding
+    // function for a vector.
+    result = await collection.hybridSearch({ knn: { queryTexts: query, nResults: k }, nResults: k, include });
+  } else {
+    result = await collection.hybridSearch({
+      knn: { queryEmbeddings: [embedding], queryTexts: query, nResults: k },
+      nResults: k,
+      include,
+    });
+  }
   const isNested = Array.isArray(result.ids?.[0]);
   const ids = (isNested ? result.ids[0] : result.ids) ?? [];
   const documents = (isNested ? result.documents?.[0] : result.documents) ?? [];
@@ -151,6 +162,9 @@ app.post("/api/reset", async (_request, response) => {
   response.json({ ok: true });
 });
 
+// onnxruntime-web ships its wasm loaders in node_modules; serving them here removes the
+// CDN dependency of the browser runtime.
+app.use("/ort", express.static(path.join(root, "node_modules", "onnxruntime-web", "dist")));
 // Models downloaded by scripts/fetch-models.sh are served from here so the browser does
 // not have to re-fetch weights from a remote host on every fresh profile.
 app.use("/models", express.static(path.join(root, "public", "models")));

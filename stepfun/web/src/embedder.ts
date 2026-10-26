@@ -11,6 +11,9 @@ export const MODEL_ID = "Xenova/all-MiniLM-L6-v2";
 env.allowLocalModels = true;
 env.localModelPath = "/models/";
 env.allowRemoteModels = true;
+// Serve the ONNX Runtime wasm assets from this application instead of a CDN, so inference
+// works on a machine without access to public CDNs.
+env.backends.onnx.wasm.wasmPaths = "/ort/";
 env.useBrowserCache = typeof caches !== "undefined";
 
 export class Embedder {
