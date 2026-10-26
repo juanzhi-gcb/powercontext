@@ -1,0 +1,22 @@
+[project]
+name = "ordermesh"
+version = "0.3.0"
+description = "Minimal order query service used as the SDD demo business project"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ordermesh*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+markers = [
+    "spec(id): traceability marker linking a test to one specification requirement item",
+    "regression: a guard for behaviour that must not change even when it cites the changed spec",
+]

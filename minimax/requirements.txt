@@ -1,0 +1,4 @@
+# Runtime used by the verification sample (Linux/macOS, CPython 3.11-3.14).
+# powercontext[seekdb] brings the embedded seekdb binding, PyMySQL and PyYAML.
+powercontext[cli,server,seekdb]==1.4.0
+pytest>=8,<9
