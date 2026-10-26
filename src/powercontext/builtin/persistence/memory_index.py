@@ -57,6 +57,32 @@ def memory_channel_hits(
     )
 
 
+def fused_memory_channels(
+    rows: Iterable[Mapping[Any, Any]],
+    memories: tuple[ArtifactRef, ...],
+    /,
+) -> MemorySearchChannels:
+    """Split one native candidate statement's rows back into channel rankings.
+
+    A native hybrid query returns both rankings tagged with a ``channel`` column.
+    Order within each channel is the statement's order, so the shared fusion sees
+    the same inputs it would have received from separate FTS and vector queries.
+    """
+
+    fts_rows = []
+    vector_rows = []
+    for row in rows:
+        channel = str(row["channel"])
+        if channel == "fts":
+            fts_rows.append(row)
+        elif channel == "vector":
+            vector_rows.append(row)
+    return MemorySearchChannels(
+        fts=memory_channel_hits(fts_rows, memories),
+        vector=memory_channel_hits(vector_rows, memories),
+    )
+
+
 class MemoryIndex(Protocol):
     """Optional query projection updated in the authoritative write transaction."""
 

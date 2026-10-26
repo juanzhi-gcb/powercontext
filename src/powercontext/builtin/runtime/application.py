@@ -462,6 +462,14 @@ class _RuntimeStateError(RuntimeError):
         super().__init__(messages[code])
 
 
+def _wake_artifact_processing(runtime: BuiltinRuntime) -> None:
+    """Signal automatic admission only after a journal write has committed."""
+
+    supervisor = runtime.artifact_processing_supervisor
+    if supervisor is not None:
+        supervisor.wake()
+
+
 class ScopedSourceApplication:
     """Capture raw integration content in one Source partition."""
 
@@ -489,10 +497,12 @@ class ScopedSourceApplication:
                             span.set_attributes({_MEMORY_CAPTURE_SOURCE_COUNT: 1})
             except BaseValueConflictError as error:
                 raise SourceConflictError("identity", error.identity) from None
-            return SourceReceipt(
+            receipt = SourceReceipt(
                 source_ref=SourceRef(source_type=record.source_type, source_id=record.source_id),
                 sequence=record.position,
             )
+            _wake_artifact_processing(self._runtime)
+            return receipt
         async with self._runtime._context(self.scope_id) as context:
             with self._runtime._stage(_MEMORY_CAPTURE_STAGE, attributes={}) as span:
                 source, sequence = await context.sources.capture(
@@ -505,7 +515,9 @@ class ScopedSourceApplication:
                 )
                 if span is not None:
                     span.set_attributes({_MEMORY_CAPTURE_SOURCE_COUNT: 1})
-            return SourceReceipt(source_ref=context.sources.catalog.as_ref(source), sequence=sequence)
+            receipt = SourceReceipt(source_ref=context.sources.catalog.as_ref(source), sequence=sequence)
+        _wake_artifact_processing(self._runtime)
+        return receipt
 
 
 class SourceApplication:
@@ -564,7 +576,9 @@ class ScopedRecordApplication:
         /,
     ) -> ArtifactCreated:
         async with self._runtime._scope_operation(self.scope_id), self._runtime._locked(self.scope_id):
-            return await self._runtime._records().create_artifact(self.scope_id, family, write)
+            created = await self._runtime._records().create_artifact(self.scope_id, family, write)
+        _wake_artifact_processing(self._runtime)
+        return created
 
     async def get_artifact(self, family: str, artifact_id: str, /) -> ArtifactRecord:
         async with self._runtime._scope_operation(self.scope_id):
