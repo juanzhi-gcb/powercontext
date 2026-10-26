@@ -82,6 +82,10 @@ _MAX_QUERY_TERMS = 8
 _HITS_PER_QUERY = 100
 _MAX_CANDIDATES = 200
 _HEADING_CHARS = 300
+_DOCUMENT_BOOST = 2.0
+_SCOPED_WEIGHT = 1.0
+_SCOPED_TERMS = 6
+_DOMINANCE_RATIO = 1.5
 _RRF_OFFSET = 60
 _RRF_WEIGHT = 0.6
 _SINGLE_TERM_WEIGHT = 0.5
@@ -201,8 +205,11 @@ async def search_pdf_pages(
     from powercontext.builtin.runtime.models import GetMemoryEntryRequest, SearchMemoryRequest
 
     scored: dict[tuple[str, str, str], tuple[MemoryHit, float]] = {}
-    for subquery, weight in _subqueries(terms, expanded, question):
-        page = await memory.search(SearchMemoryRequest(query=subquery, mode="fts", limit=_HITS_PER_QUERY))  # type: ignore[attr-defined]
+
+    async def collect(probe: str, weight: float) -> None:
+        page = await memory.search(  # type: ignore[attr-defined]
+            SearchMemoryRequest(query=probe, mode="fts", limit=_HITS_PER_QUERY)
+        )
         for rank, hit in enumerate(page.hits, start=1):
             identifier = (hit.memory_ref.artifact_id, hit.entry_id, hit.entry_version_id)
             current = scored.get(identifier)
@@ -212,8 +219,23 @@ async def search_pdf_pages(
             else:
                 scored[identifier] = (current[0], current[1] + contribution)
 
+    for subquery, weight in _subqueries(terms, expanded, question):
+        await collect(subquery, weight)
+
     if not scored:
         return ()
+    target = _target_document(question, tuple(hit for hit, _ in scored.values()))
+    if target is None:
+        target = _dominant_document(scored)
+    if target is not None:
+        document_term = re.sub(r"[^a-z0-9]", "", target.split("_")[0].casefold())
+        for term in terms[:6]:
+            await collect(f"{document_term} {term}", _SCOPED_WEIGHT)
+        for synonym in expanded[:_SCOPED_TERMS]:
+            if synonym in terms:
+                continue
+            await collect(f"{document_term} {synonym}", _SYNONYM_WEIGHT)
+
     hits = tuple(hit for hit, _ in scored.values())
     fused = tuple(contribution for _, contribution in scored.values())
     lexical = _rank_scores(expanded, tuple(hit.text for hit in hits), _affinity_hints(terms))
@@ -221,6 +243,10 @@ async def search_pdf_pages(
         lexical[index] / max(lexical) + _RRF_WEIGHT * fused[index] / max(fused)
         for index in range(len(hits))
     ]
+    if target is not None:
+        for index, hit in enumerate(hits):
+            if _document_of(hit) == target:
+                scores[index] *= _DOCUMENT_BOOST
     ranked = sorted(
         zip(scores, hits, strict=True),
         key=lambda pair: (-pair[0], pair[1].entry_id),
@@ -367,6 +393,44 @@ def _subqueries(
     queries.extend((term, _SYNONYM_WEIGHT) for term in expanded if term not in terms)
     queries.append((question, 1.0))
     return tuple(queries)
+
+
+def _document_of(hit: MemoryHit, /) -> str:
+    """The document identity every page entry carries on its first line."""
+
+    return hit.text.split("\n", 1)[0].strip()
+
+
+def _target_document(question: str, hits: tuple[MemoryHit, ...], /) -> str | None:
+    """Name the one document a question is about, when it says so unambiguously.
+
+    A scope may hold several filings, so pages from other companies compete for the same
+    generic terms; the asked-about document is the only disambiguator available offline.
+    """
+
+    documents = {_document_of(hit) for hit in hits}
+    compact = re.sub(r"[^a-z0-9]", "", question.casefold())
+    matches = []
+    for name in documents:
+        head = re.sub(r"[^a-z0-9]", "", name.split("_")[0].casefold())
+        if len(head) >= 3 and head in compact:
+            matches.append(name)
+    return matches[0] if len(matches) == 1 else None
+
+
+def _dominant_document(scored: dict[tuple[str, str, str], tuple[MemoryHit, float]], /) -> str | None:
+    """Fall back to the document that owns most of the first-pass evidence."""
+
+    mass: dict[str, float] = {}
+    for hit, contribution in scored.values():
+        document = _document_of(hit)
+        mass[document] = mass.get(document, 0.0) + contribution
+    ranked = sorted(mass.items(), key=lambda item: -item[1])
+    if not ranked:
+        return None
+    if len(ranked) == 1:
+        return ranked[0][0]
+    return ranked[0][0] if ranked[0][1] >= _DOMINANCE_RATIO * ranked[1][1] else None
 
 
 def _affinity_hints(terms: tuple[str, ...], /) -> tuple[re.Pattern[str], ...]:
