@@ -249,6 +249,7 @@ from powercontext.builtin.runtime.recall_sufficiency import (
     build_recall_candidates,
     recall_effort,
 )
+from powercontext.builtin.runtime.source_lifecycle import SourceLifecycleApplication, SourceLifecycleError
 from powercontext.builtin.runtime.statistics import RelationalScopedStatistics, overview_selection
 from powercontext.builtin.scope import ScopeApplication, ScopeDescriptor, ScopeSelection
 from powercontext.builtin.scope.subject_sources import SubjectSourceService
@@ -299,6 +300,7 @@ if TYPE_CHECKING:
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
     from powercontext.builtin.handoff_report.application import HandoffReportApplication
+    from powercontext.builtin.persistence.source_lifecycle import SourceLifecycleRepository
     from powercontext.builtin.runtime.artifact_processing import ArtifactProcessingSupervisors
 
 
@@ -2604,6 +2606,52 @@ class ScopedMemoryApplication:
                 entry=_entry_record(updated, retired),
             )
 
+    async def _apply_lifecycle_state(
+        self,
+        citation: MemoryCitation,
+        *,
+        active: bool,
+        reason: str | None = None,
+    ) -> Memory:
+        """Set one entry's state from a lifecycle citation.
+
+        Unlike ``retire()`` this accepts a citation anchored at an older Memory
+        revision: the entry identity and its immutable version are matched
+        against the current head, while the cited revision itself is only
+        history.  A missing or drifted entry is a contract error.
+        """
+
+        async with self._runtime._context(
+            self.scope_id,
+            embedding_purpose=ModelUsagePurpose.MEMORY_INDEXING,
+        ) as context:
+            async with self._runtime._locked(self.scope_id):
+                service = context.artifacts.memory
+                current = await _head_or_none(service, context.artifacts.memory_artifact_id)
+                if current is None:
+                    raise SourceLifecycleError("memory", "Scope has no Memory")
+                _validate_memory_identity(context.artifacts.memory_artifact_id, current)
+                if citation.memory_ref.artifact_id != current.artifact_id:
+                    raise SourceLifecycleError("citation", citation.entry_id)
+                manifest_entry = next(
+                    (item for item in current.content.manifest.entries if item.entry_id == citation.entry_id),
+                    None,
+                )
+                if manifest_entry is None or manifest_entry.entry_version_id != citation.entry_version_id:
+                    raise SourceLifecycleError("citation", citation.entry_id)
+                entry = next(
+                    (item for item in await service.entries(current) if item.entry_id == citation.entry_id),
+                    None,
+                )
+                if entry is None or entry.entry_version_id != citation.entry_version_id:
+                    raise SourceLifecycleError("citation", citation.entry_id)
+                target_state = "active" if active else "inactive"
+                if manifest_entry.state == target_state:
+                    return current
+                if active:
+                    return await service.reactivate(current, entries=(entry,), reason=reason)
+                return await service.forget(current, entries=(entry,), reason=reason)
+
     async def changes(self, *, since_revision: int | None = None) -> MemoryChangesPage:
         async with self._runtime._context(self.scope_id) as context:
             service = context.artifacts.memory
@@ -3061,6 +3109,7 @@ class BuiltinRuntime:
         scheduled_experience_runner: ScheduledExperienceRunner | None = None,
         remote_ingestion: RemoteIngestion | None = None,
         dream_service: DreamService | None = None,
+        source_lifecycle: SourceLifecycleRepository | None = None,
         generation_concurrency: int = 4,
     ) -> None:
         if source_window_limit < 1:
@@ -3144,6 +3193,7 @@ class BuiltinRuntime:
         self.handoff = HandoffApplication(self)
         self.work = WorkApplication(self)
         self.memory = MemoryApplication(self)
+        self.lifecycle = SourceLifecycleApplication(self, source_lifecycle)
         self.topic_memory = TopicMemoryApplication(self)
         self.records = RecordApplication(self)
         self.prompts = PromptApplication(self)

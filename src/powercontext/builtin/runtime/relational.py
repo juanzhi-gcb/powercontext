@@ -101,6 +101,7 @@ from powercontext.builtin.artifacts.skill.distribution import RemoteSkillDistrib
 from powercontext.builtin.artifacts.skill.publication import ManagedSkillPublicationService
 from powercontext.builtin.artifacts.skill.registry import ExternalSkillRegistryService
 from powercontext.builtin.artifacts.topic_memory import (
+    MAX_TOPIC_MEMORY_SEARCH_LIMIT,
     TOPIC_MEMORY_SOURCE_WINDOW_BINDING,
     PublishedTopicMemory,
     TopicMemory,
@@ -152,6 +153,7 @@ from powercontext.builtin.persistence.recurrence import RecurrenceRepository
 from powercontext.builtin.persistence.skill_packages import SkillPackageRepository
 from powercontext.builtin.persistence.skill_publications import SkillPublicationRepository
 from powercontext.builtin.persistence.source_definitions import SourceDefinitionManifestRepository
+from powercontext.builtin.persistence.source_lifecycle import SourceLifecycleRepository
 from powercontext.builtin.persistence.sources import SourceRepository, StoredSource
 from powercontext.builtin.persistence.statistics import StatisticsRepository
 from powercontext.builtin.persistence.supervision import (
@@ -551,6 +553,7 @@ class RelationalContexts:
         self.database = database
         self.scopes = ScopeApplication(database, cursor_secret=cursor_secret)
         self.source_registry = source_registry or BUILTIN_SOURCE_REGISTRY
+        self.source_lifecycle = SourceLifecycleRepository(database)
         self.index = NoMemoryIndex() if index is None else index
         self.topic_memory_index = NoTopicMemoryIndex() if topic_memory_index is None else topic_memory_index
         self.experience_index = NoExperienceIndex() if experience_index is None else experience_index
@@ -991,16 +994,31 @@ class RelationalContexts:
             embedding_profile = query_embedding.embedding_profile
         scope = validate_scope_id(scope_id)
         async with self.database.transaction() as connection:
-            return await self.repositories.topic_memories.search(
+            inactive_topics = await self.source_lifecycle.inactive_topic_artifact_ids(connection, scope)
+            # Filtering happens before the caller's limit truncates the page, so
+            # an unavailable Topic cannot crowd out a surviving one.  This is a
+            # blocklist: Topics that never joined a lifecycle stay searchable.
+            fetch_limit = limit
+            if inactive_topics:
+                fetch_limit = min(MAX_TOPIC_MEMORY_SEARCH_LIMIT, limit + len(inactive_topics))
+            result = await self.repositories.topic_memories.search(
                 connection,
                 scope,
                 query,
-                limit=limit,
+                limit=fetch_limit,
                 mode=mode,
                 query_vector=query_vector,
                 embedding_profile=embedding_profile,
                 admission=admission,
             )
+        if not inactive_topics:
+            return result
+        hits = tuple(
+            hit
+            for hit in result.hits
+            if not (hit.artifact_ref.family == TopicMemory.family and hit.artifact_ref.artifact_id in inactive_topics)
+        )[:limit]
+        return result.model_copy(update={"hits": hits})
 
     async def search_skills(
         self,
