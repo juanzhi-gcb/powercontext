@@ -40,6 +40,18 @@ PDF_PAGE_SOURCE_NAME = "pdf-page"
 PDF_PAGE_DEFINITION_VERSION = "1"
 _SOURCE_ID_PREFIX = "pdf"
 _TERM_PATTERN = re.compile(r"[a-z]+|\d+")
+_ACRONYM_PATTERN = re.compile(r"\b(?:r&d|d&a|sg&a|sga)\b")
+_STATEMENT_HEADING = re.compile(
+    r"consolidated\s+(?:balance\s+sheets?|statements?\s+of\s+(?:income|operations|earnings|"
+    r"cash\s+flows?|comprehensive\s+income|financial\s+position))"
+)
+_STATEMENT_BONUS = 0.15
+_ACRONYMS = {
+    "r&d": "research development",
+    "d&a": "depreciation amortization",
+    "sg&a": "selling general administrative",
+    "sga": "selling general administrative",
+}
 _STOPWORDS = frozenset(
     {
         "a", "about", "after", "all", "also", "an", "and", "any", "are", "as", "at", "be", "because",
@@ -57,7 +69,6 @@ _MAX_CANDIDATES = 200
 _HEADING_CHARS = 300
 _RRF_OFFSET = 60
 _RRF_WEIGHT = 0.6
-_EXPANDED_TERM_LIMIT = 10
 
 # Financial-report questions rarely repeat the filing's own vocabulary: a question about
 # "geographies" is answered by a page that lists countries and businesses. Expanding a few
@@ -166,7 +177,7 @@ async def search_pdf_pages(
     from powercontext.builtin.runtime.models import GetMemoryEntryRequest, SearchMemoryRequest
 
     scored: dict[tuple[str, str, str], tuple[MemoryHit, float]] = {}
-    for subquery in _subqueries(expanded, question):
+    for subquery in _subqueries(terms, expanded, question):
         page = await memory.search(SearchMemoryRequest(query=subquery, mode="fts", limit=_HITS_PER_QUERY))  # type: ignore[attr-defined]
         for rank, hit in enumerate(page.hits, start=1):
             identifier = (hit.memory_ref.artifact_id, hit.entry_id, hit.entry_version_id)
@@ -277,12 +288,27 @@ def _page_source_id(document_id: str, document_sha256: str, page_number: int, /)
 
 
 def _question_terms(question: str, /) -> tuple[str, ...]:
+    normalized = _ACRONYM_PATTERN.sub(lambda match: _ACRONYMS[match.group(0)], question.lower())
     terms: list[str] = []
-    for term in _TERM_PATTERN.findall(question.lower()):
+    for term in _TERM_PATTERN.findall(normalized):
         if term in _STOPWORDS or len(term) < 2 or term in terms:
             continue
         terms.append(term)
     return tuple(terms)
+
+
+def _variants(term: str, /) -> tuple[str, ...]:
+    forms = {term}
+    if len(term) > 3:
+        if term.endswith("y"):
+            forms.add(term[:-1] + "ies")
+        elif term.endswith(("s", "x", "z", "ch", "sh")):
+            forms.add(term + "es")
+        elif not term.endswith("s"):
+            forms.add(term + "s")
+        if term.endswith("s"):
+            forms.add(term[:-1])
+    return tuple(forms)
 
 
 def _expand_terms(terms: tuple[str, ...], /) -> tuple[str, ...]:
@@ -294,12 +320,18 @@ def _expand_terms(terms: tuple[str, ...], /) -> tuple[str, ...]:
     return tuple(expanded)
 
 
-def _subqueries(terms: tuple[str, ...], question: str, /) -> tuple[str, ...]:
+def _synonyms(term: str, /) -> tuple[str, ...]:
+    return (*_EXPANSIONS.get(term, ()), *(_form for _form in _variants(term) if _form != term))
+
+
+def _subqueries(terms: tuple[str, ...], expanded: tuple[str, ...], question: str, /) -> tuple[str, ...]:
     """Ask several short questions because long FTS queries are admitted too sparsely."""
 
-    focused = terms[:_EXPANDED_TERM_LIMIT]
+    focused = terms[:_MAX_QUERY_TERMS]
     queries = [" ".join(pair) for pair in combinations(focused, 2)]
     queries.extend(focused)
+    for term in terms[:6]:
+        queries.extend(f"{term} {synonym}" for synonym in _synonyms(term))
     queries.append(question)
     return tuple(queries)
 
@@ -316,31 +348,37 @@ def _rank_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[floa
     if not total:
         return []
     average_length = sum(len(tokens) for tokens in token_lists) / total
+    wanted = set(terms)
     document_frequency: dict[str, int] = {}
     for tokens in token_lists:
-        for term in set(tokens):
+        for term in wanted.intersection(tokens):
             document_frequency[term] = document_frequency.get(term, 0) + 1
     idf = {
         term: math.log(1 + (total - document_frequency.get(term, 0) + 0.5) / (document_frequency.get(term, 0) + 0.5))
-        for term in set(terms)
+        for term in wanted
     }
-    rarest = sorted(set(terms), key=lambda term: -idf.get(term, 0.0))[:3]
+    rarest = sorted(wanted, key=lambda term: -idf.get(term, 0.0))[:3]
     scores: list[float] = []
     for original, tokens in zip(texts, token_lists, strict=True):
         counts = Counter(tokens)
         length = len(tokens) or 1
         normalizer = 1.2 * (1 - 0.75 + 0.75 * length / max(average_length, 1.0))
         score = 0.0
-        for term in terms:
+        for term in wanted:
             frequency = counts.get(term, 0)
             if frequency:
                 score += idf.get(term, 0.0) * frequency * 2.2 / (frequency + normalizer)
         heading = set(_TERM_PATTERN.findall(original[:_HEADING_CHARS].lower()))
-        score += 0.8 * sum(idf.get(term, 0.0) for term in terms if term in heading)
+        score += 0.8 * sum(idf.get(term, 0.0) for term in wanted if term in heading)
         if rarest:
             covered = sum(1 for term in rarest if counts.get(term))
             score += 1.5 * covered / len(rarest) * idf.get(rarest[0], 0.0)
         scores.append(score)
+    peak = max(scores) if scores else 0.0
+    if peak > 0:
+        for index, original in enumerate(texts):
+            if _STATEMENT_HEADING.search(original[:_HEADING_CHARS].lower()):
+                scores[index] += _STATEMENT_BONUS * peak
     return scores
 
 
