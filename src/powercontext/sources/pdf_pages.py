@@ -470,19 +470,20 @@ def _rank_scores(
         term: math.log(1 + (total - document_frequency.get(term, 0) + 0.5) / (document_frequency.get(term, 0) + 0.5))
         for term in wanted
     }
-    rarest = sorted(wanted, key=lambda term: -idf.get(term, 0.0))[:3]
+    ordered_terms = sorted(wanted)
+    rarest = sorted(wanted, key=lambda term: (-idf.get(term, 0.0), term))[:3]
     scores: list[float] = []
     for original, tokens in zip(texts, token_lists, strict=True):
         counts = Counter(tokens)
         length = len(tokens) or 1
         normalizer = 1.2 * (1 - 0.75 + 0.75 * length / max(average_length, 1.0))
         score = 0.0
-        for term in wanted:
+        for term in ordered_terms:
             frequency = counts.get(term, 0)
             if frequency:
                 score += idf.get(term, 0.0) * frequency * 2.2 / (frequency + normalizer)
         heading = set(_TERM_PATTERN.findall(original[:_HEADING_CHARS].lower()))
-        score += 0.8 * sum(idf.get(term, 0.0) for term in wanted if term in heading)
+        score += 0.8 * sum(idf.get(term, 0.0) for term in ordered_terms if term in heading)
         if rarest:
             covered = sum(1 for term in rarest if counts.get(term))
             score += 1.5 * covered / len(rarest) * idf.get(rarest[0], 0.0)
