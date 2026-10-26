@@ -1,7 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SeekdbAdminClient, SeekdbClient } from "seekdb";
+import { FulltextIndexConfig, Schema, SeekdbAdminClient, SeekdbClient } from "seekdb";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -11,6 +11,7 @@ const DIMENSION = Number(process.env.EMBED_DIMENSION ?? 384);
 const DB_PATH = process.env.SEEPDB_PATH ?? path.join(root, "seekdb-data", "kb.db");
 const DB_NAME = process.env.SEEPDB_DATABASE ?? "kb";
 const COLLECTION = process.env.SEEPDB_COLLECTION ?? "documents";
+const FULLTEXT_ANALYZER = process.env.SEEPDB_FULLTEXT_ANALYZER ?? "ngram";
 const ADD_BATCH = Number(process.env.SEEPDB_ADD_BATCH ?? 64);
 
 // The browser owns the model, so the server never embeds anything. The collection still
@@ -36,12 +37,27 @@ async function openCollection() {
   try {
     collection = await client.getCollection({ name: COLLECTION, embeddingFunction: browserEmbedding });
   } catch {
-    collection = await client.createCollection({
-      name: COLLECTION,
-      dimension: DIMENSION,
-      distance: "cosine",
-      embeddingFunction: browserEmbedding,
-    });
+    try {
+      // The default analyzer splits "CODE-0007" into generic words and digits, which makes
+      // exact-token queries indistinguishable. The ngram analyzer indexes character n-grams
+      // so such identifiers stay matchable.
+      const schema = new Schema({ fulltextIndex: new FulltextIndexConfig(FULLTEXT_ANALYZER) });
+      collection = await client.createCollection({
+        name: COLLECTION,
+        dimension: DIMENSION,
+        distance: "cosine",
+        schema,
+        embeddingFunction: browserEmbedding,
+      });
+    } catch (error) {
+      console.error("schema with analyzer rejected, falling back to the default:", error?.message ?? error);
+      collection = await client.createCollection({
+        name: COLLECTION,
+        dimension: DIMENSION,
+        distance: "cosine",
+        embeddingFunction: browserEmbedding,
+      });
+    }
   }
   return { client, collection };
 }
