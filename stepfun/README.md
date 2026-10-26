@@ -89,3 +89,13 @@ stepfun/
 ```
 
 服务端**从不计算向量**：集合绑定的 embedding 函数会直接抛错，任何绕过浏览器推理的调用都会失败。
+## 离线模型与基准测试
+
+```bash
+npm run models      # 下载权重到 public/models（约 113 MB），页面不再访问外部主机
+npm run benchmark   # 需要先 npm i -D puppeteer-core，并设置 CHROME_PATH（默认 Edge）
+```
+
+`benchmark` 用 Puppeteer 打开正在运行的应用，通过页面暴露的 `window.__kb.Embedder` 以 q8 与 fp32 分别编码同一查询集，输出目标文档名次与 MRR——两个精度走完全相同的代码路径。
+
+降级验证：给浏览器加 `--disable-gpu`，并在页面加载前把 `navigator.gpu` 置空，界面徽标会显示 `WASM`，核心流程仍可用。

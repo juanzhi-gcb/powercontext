@@ -1,4 +1,1 @@
-node_modules/
-dist/
-seekdb-data/
-*.log
+public/models/

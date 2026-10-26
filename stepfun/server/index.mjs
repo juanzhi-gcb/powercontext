@@ -87,15 +87,22 @@ app.post("/api/import", async (request, response) => {
 
   const started = performance.now();
   let written = 0;
-  for (let start = 0; start < items.length; start += ADD_BATCH) {
-    const batch = items.slice(start, start + ADD_BATCH);
-    await collection.add({
-      ids: batch.map((item) => item.id),
-      documents: batch.map((item) => item.text),
-      embeddings: batch.map((item) => item.embedding),
-      metadatas: batch.map((item) => item.metadata ?? {}),
-    });
-    written += batch.length;
+  try {
+    for (let start = 0; start < items.length; start += ADD_BATCH) {
+      const batch = items.slice(start, start + ADD_BATCH);
+      // upsert keeps re-importing the same document id idempotent instead of failing on a
+      // duplicated primary key.
+      await collection.upsert({
+        ids: batch.map((item) => item.id),
+        documents: batch.map((item) => item.text),
+        embeddings: batch.map((item) => item.embedding),
+        metadatas: batch.map((item) => item.metadata ?? {}),
+      });
+      written += batch.length;
+    }
+  } catch (error) {
+    response.status(500).json({ error: `write failed: ${error?.message ?? error}` });
+    return;
   }
   response.json({ written, ms: performance.now() - started });
 });
@@ -144,6 +151,9 @@ app.post("/api/reset", async (_request, response) => {
   response.json({ ok: true });
 });
 
+// Models downloaded by scripts/fetch-models.sh are served from here so the browser does
+// not have to re-fetch weights from a remote host on every fresh profile.
+app.use("/models", express.static(path.join(root, "public", "models")));
 app.use(express.static(path.join(root, "dist")));
 app.get("*", (_request, response) => {
   response.sendFile(path.join(root, "dist", "index.html"));
@@ -166,3 +176,8 @@ async function shutdown() {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+// Express 4 does not forward rejected async handlers, and an unhandled rejection would take
+// the whole embedded database process down with it.
+process.on("unhandledRejection", (error) => {
+  console.error("unhandled rejection", error?.message ?? error);
+});

@@ -8,7 +8,9 @@ export const MODEL_ID = "Xenova/all-MiniLM-L6-v2";
 // Everything runs from the browser cache when the page is a secure context (https or
 // localhost). Plain-HTTP origins do not expose the Cache API, so the model is simply
 // re-fetched in those environments instead of failing to load.
-env.allowLocalModels = false;
+env.allowLocalModels = true;
+env.localModelPath = "/models/";
+env.allowRemoteModels = true;
 env.useBrowserCache = typeof caches !== "undefined";
 
 export class Embedder {

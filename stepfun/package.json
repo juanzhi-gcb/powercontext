@@ -10,8 +10,9 @@
     "dev": "concurrently -k -n web,server \"npm:dev:web\" \"npm:dev:server\"",
     "build": "vite build",
     "start": "sh scripts/with-seekdb-lib.sh server/index.mjs",
-    "benchmark": "sh scripts/with-seekdb-lib.sh scripts/benchmark.mjs",
-    "typecheck": "tsc --noEmit"
+    "benchmark": "node bench/bench.mjs",
+    "typecheck": "tsc --noEmit",
+    "models": "sh scripts/fetch-models.sh"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.1",
