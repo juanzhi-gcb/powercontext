@@ -1,0 +1,28 @@
+{
+  "name": "seekdb-stepfun-kb",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser-side embedding with seekdb hybrid retrieval: a mini knowledge base for the StepFun ecosystem task",
+  "scripts": {
+    "dev:web": "vite",
+    "dev:server": "sh scripts/with-seekdb-lib.sh server/index.mjs",
+    "dev": "concurrently -k -n web,server \"npm:dev:web\" \"npm:dev:server\"",
+    "build": "vite build",
+    "start": "sh scripts/with-seekdb-lib.sh server/index.mjs",
+    "benchmark": "sh scripts/with-seekdb-lib.sh scripts/benchmark.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "@seekdb/js-bindings": "1.4.0",
+    "express": "^4.21.2",
+    "seekdb": "1.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  }
+}

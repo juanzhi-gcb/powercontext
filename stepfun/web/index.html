@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>seekdb × 端侧 Embedding 迷你知识库</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>端侧 Embedding + seekdb 混合检索</h1>
+      <div class="status">
+        <span id="backend" class="badge badge--pending">后端：加载中</span>
+        <span id="model" class="badge">模型：Xenova/all-MiniLM-L6-v2</span>
+        <span id="dtype" class="badge">精度：INT8 (q8)</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>1. 导入文档</h2>
+        <p class="hint">
+          文档在<strong>浏览器本地</strong>完成向量化，向量与原文写入 seekdb；服务端不做任何推理。
+        </p>
+        <div class="row">
+          <input id="files" type="file" accept=".txt,.md,text/plain,text/markdown" multiple />
+          <button id="import" disabled>向量化并写入 seekdb</button>
+        </div>
+        <progress id="progress" max="100" value="0"></progress>
+        <p id="importStatus" class="hint"></p>
+      </section>
+
+      <section class="panel">
+        <h2>2. 检索</h2>
+        <div class="row">
+          <input id="query" type="text" placeholder="输入自然语言问题，例如 How does seekdb rank hybrid results?" />
+          <button id="search" disabled>检索</button>
+        </div>
+        <p id="searchStatus" class="hint"></p>
+        <ol id="results"></ol>
+      </section>
+
+      <section class="panel">
+        <h2>3. 运行指标</h2>
+        <table id="metrics">
+          <thead>
+            <tr><th>阶段</th><th>耗时 / 数值</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="row">
+          <button id="reset" class="secondary">清空知识库</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
