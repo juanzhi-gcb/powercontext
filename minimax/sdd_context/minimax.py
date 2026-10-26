@@ -119,7 +119,7 @@ class MinimaxClient:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def chat(self, messages: list[dict[str, str]], *, temperature: float = 0.2, max_tokens: int = 6000) -> MinimaxResponse:
+    def chat(self, messages: list[dict[str, str]], *, temperature: float = 0.2, max_tokens: int = 16000) -> MinimaxResponse:
         if not self.settings.minimax_api_key:
             raise MinimaxError(
                 "MINIMAX_API_KEY is not set; export it or use --replay with a recorded response"
@@ -150,10 +150,20 @@ class MinimaxClient:
 
         if body.get("base_resp", {}).get("status_code") not in (None, 0):
             raise MinimaxError(f"MiniMax error: {body['base_resp']}")
+        choice = (body.get("choices") or [{}])[0]
+        if choice.get("finish_reason") == "length":
+            raise MinimaxError(
+                "MiniMax output was truncated (finish_reason=length) before the JSON answer; "
+                "raise --max-tokens or shorten the context"
+            )
         try:
-            content = body["choices"][0]["message"]["content"]
+            content = choice["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
             raise MinimaxError(f"unexpected MiniMax response shape: {json.dumps(body)[:500]}") from exc
+        if not content:
+            raise MinimaxError(
+                f"MiniMax returned empty content (finish_reason={choice.get('finish_reason')!r})"
+            )
         return MinimaxResponse(
             ok=True,
             content=content,

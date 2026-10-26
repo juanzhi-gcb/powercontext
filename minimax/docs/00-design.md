@@ -20,7 +20,7 @@
                    │    └─ runner.py ──▶ pytest 目标套件 / 回归套件，记录退出码与日志    │
                    └────────────────────────────────────────────────────────────────┘
                               │                        │                      │
-                        seekdb/ OceanBase        PowerContext            MiniMax-M2
+                        seekdb/ OceanBase        PowerContext       MiniMax-M3.1-Flash
 ```
 
 ## 2. 资料如何进入数据库

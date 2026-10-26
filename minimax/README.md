@@ -9,7 +9,7 @@
 - 上下文模块：`sdd_context/`（CLI：`python -m sdd_context.cli`）
 - 数据库：seekdb（嵌入式，`pylibseekdb`）或 OceanBase / MySQL（DSN）
 - 任务状态：PowerContext 1.4.0（HTTPServer + Atomic Memory）
-- 代码修改：MiniMax `MiniMax-M2`（OpenAI 兼容 `/v1/chat/completions`）
+- 代码修改：MiniMax `MiniMax-M3.1-Flash`（OpenAI 兼容 `/v1/chat/completions`）
 
 完整验证样例见 [docs/01-verification-sample.md](docs/01-verification-sample.md)，
 技术说明见 [docs/00-design.md](docs/00-design.md)，
@@ -40,7 +40,7 @@ minimax/
 | pylibseekdb | 1.4.0.post1 | 嵌入式 seekdb，Linux/macOS x86_64/aarch64 |
 | PyMySQL | 1.1.x | 1.2.x 与 aiomysql 有兼容问题，requirements 由 powercontext 约束 |
 | pytest | 8.x | 运行目标/回归测试 |
-| MiniMax API | `https://api.minimaxi.com/v1` | OpenAI 兼容，模型 `MiniMax-M2` |
+| MiniMax API | `https://api.minimaxi.com/v1` | OpenAI 兼容；实测可用模型 `MiniMax-M3.1-Flash`（`MiniMax-M2` 在该账号返回 2069「不再可用」，模型 id 可用 `MINIMAX_MODEL` 覆盖） |
 
 > Windows 无 `pylibseekdb` wheel，请在 **WSL2 / Linux / macOS** 中运行；或把
 > `SDDCTX_DB_MODE=server` 指向一个 OceanBase/MySQL 实例（见第 3 节）。
@@ -153,6 +153,9 @@ bash scripts/update_spec_demo.sh
 ## 6. 已知限制
 
 - `pylibseekdb` 只提供 Linux/macOS wheel；Windows 需在 WSL2 中运行，或改用 `SDDCTX_DB_MODE=server`。
+- 在 WSL 里**不要把数据目录放在 `/mnt/c`**（9p 文件系统上 seekdb 无法打开）；请设置
+  `SDDCTX_DB_DIR=$HOME/.sddctx/seekdb` 和 `POWERCONTEXT_DATA_DIR=$HOME/.sddctx/powercontext`。
+  原生 Linux 上默认值（`minimax/.seekdb`、`minimax/.powercontext`）可直接使用。
 - 嵌入式 seekdb 每个进程约 1–2 秒启动时间，CLI 每次调用都会打开/关闭实例。
 - PowerContext 未配置生成/向量模型，因此只使用显式 Memory 与 FTS 检索；不使用自动记忆抽取。
 - 上下文选择是可解释的 TF-IDF + 链接图，不做语义向量检索；规格中的 `keywords` 会加权。

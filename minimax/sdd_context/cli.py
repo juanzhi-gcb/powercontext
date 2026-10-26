@@ -554,7 +554,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--instruction", default="")
     p.add_argument("--replay", help="使用已记录的 MiniMax 响应，无需 API key")
     p.add_argument("--temperature", type=float, default=0.2)
-    p.add_argument("--max-tokens", type=int, default=6000)
+    p.add_argument("--max-tokens", type=int, default=16000)
     p.set_defaults(func=cmd_patch)
 
     p = sub.add_parser("verify", help="运行目标与回归测试")

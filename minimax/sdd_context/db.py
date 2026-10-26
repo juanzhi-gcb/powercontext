@@ -120,7 +120,14 @@ def open_database(settings: Settings, *, log_sink: list[QueryLog] | None = None)
             ) from exc
 
         settings.db_dir.mkdir(parents=True, exist_ok=True)
-        instance = pylibseekdb.open(str(settings.db_dir))
+        try:
+            instance = pylibseekdb.open(str(settings.db_dir))
+        except Exception as exc:  # noqa: BLE001 - seekdb raises its own error type
+            raise DatabaseError(
+                f"cannot open embedded seekdb at {settings.db_dir} ({exc}). "
+                "If this path is on a WSL /mnt drive (9p) or another network filesystem, "
+                "point SDDCTX_DB_DIR at a local Linux path, e.g. $HOME/.sddctx/seekdb"
+            ) from exc
         options = dict(instance.connection_options())
         connection = pymysql.connect(
             database="test",

@@ -7,7 +7,8 @@ if [[ -f .env ]]; then
   set -a; . ./.env; set +a
 fi
 PORT="${POWERCONTEXT_PORT:-8000}"
-mkdir -p .runtime .powercontext
+DATA_DIR="${POWERCONTEXT_DATA_DIR:-${PWD}/.powercontext}"
+mkdir -p .runtime "$DATA_DIR"
 
 if curl -sf "http://127.0.0.1:${PORT}/health/live" >/dev/null 2>&1; then
   echo "PowerContext already running on port ${PORT}"
@@ -30,7 +31,7 @@ cat > .runtime/powercontext.env <<EOF
 POWERCONTEXT_SERVER_HTTP_HOST=127.0.0.1
 POWERCONTEXT_SERVER_HTTP_PORT=${PORT}
 POWERCONTEXT_SERVER_DATABASE_KIND=seekdb
-POWERCONTEXT_SERVER_DATABASE_PATH=${PWD}/.powercontext/seekdb
+POWERCONTEXT_SERVER_DATABASE_PATH=${DATA_DIR}/seekdb
 POWERCONTEXT_SERVER_ACCESS_MODE=disabled
 POWERCONTEXT_SERVER_MCP_ENABLED=true
 POWERCONTEXT_SERVER_DASHBOARD_ENABLED=false

@@ -29,7 +29,7 @@ class Settings:
     powercontext_token: str | None = None
     minimax_base_url: str = "https://api.minimaxi.com/v1"
     minimax_api_key: str | None = None
-    minimax_model: str = "MiniMax-M2"
+    minimax_model: str = "MiniMax-M3.1-Flash"
     minimax_timeout: float = 180.0
 
     @property
@@ -63,7 +63,7 @@ class Settings:
             powercontext_token=_env("POWERCONTEXT_CLIENT_API_TOKEN"),
             minimax_base_url=(_env("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1") or "").rstrip("/"),
             minimax_api_key=_env("MINIMAX_API_KEY"),
-            minimax_model=_env("MINIMAX_MODEL", "MiniMax-M2") or "MiniMax-M2",
+            minimax_model=_env("MINIMAX_MODEL", "MiniMax-M3.1-Flash") or "MiniMax-M3.1-Flash",
             minimax_timeout=float(_env("MINIMAX_TIMEOUT", "180") or "180"),
         )
 
