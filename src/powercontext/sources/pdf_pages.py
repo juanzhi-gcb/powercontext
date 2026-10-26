@@ -45,11 +45,13 @@ _STATEMENT_PATTERNS = {
     "income": re.compile(r"statements?\s+of\s+(?:income|operations|earnings)"),
     "balance": re.compile(r"balance\s+sheets?|statements?\s+of\s+financial\s+position"),
     "cash": re.compile(r"statements?\s+of\s+cash\s+flows?"),
+    "segment": re.compile(r"by business segment|segment information|segment data"),
 }
 _AFFINITY_KEYWORDS = {
     "balance": frozenset(
         {"liability", "liabilities", "asset", "assets", "balance", "sheet", "debt", "liquidity", "quick",
-         "current", "working", "borrowings"}
+         "current", "working", "borrowings", "capital", "intensive", "property", "plant", "equipment",
+         "payable", "payables", "receivable", "receivables", "inventory"}
     ),
     "cash": frozenset(
         {"cash", "capex", "capital", "expenditure", "expenditures", "dividend", "dividends", "flow", "flows",
@@ -57,8 +59,10 @@ _AFFINITY_KEYWORDS = {
     ),
     "income": frozenset(
         {"income", "revenue", "revenues", "sales", "margin", "margins", "profit", "profits", "ebitda",
-         "operating", "earnings", "tax", "expense", "expenses", "cost", "costs", "eps", "diluted"}
+         "operating", "earnings", "tax", "expense", "expenses", "cost", "costs", "eps", "diluted", "cogs",
+         "inventory", "growth"}
     ),
+    "segment": frozenset({"segment", "segments", "division", "divisions"}),
 }
 _AFFINITY_BONUS = 0.8
 _ACRONYMS = {
