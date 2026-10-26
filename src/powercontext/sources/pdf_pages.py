@@ -41,11 +41,26 @@ PDF_PAGE_DEFINITION_VERSION = "1"
 _SOURCE_ID_PREFIX = "pdf"
 _TERM_PATTERN = re.compile(r"[a-z]+|\d+")
 _ACRONYM_PATTERN = re.compile(r"\b(?:r&d|d&a|sg&a|sga)\b")
-_STATEMENT_HEADING = re.compile(
-    r"consolidated\s+(?:balance\s+sheets?|statements?\s+of\s+(?:income|operations|earnings|"
-    r"cash\s+flows?|comprehensive\s+income|financial\s+position))"
-)
-_STATEMENT_BONUS = 0.15
+_STATEMENT_PATTERNS = {
+    "income": re.compile(r"statements?\s+of\s+(?:income|operations|earnings)"),
+    "balance": re.compile(r"balance\s+sheets?|statements?\s+of\s+financial\s+position"),
+    "cash": re.compile(r"statements?\s+of\s+cash\s+flows?"),
+}
+_AFFINITY_KEYWORDS = {
+    "balance": frozenset(
+        {"liability", "liabilities", "asset", "assets", "balance", "sheet", "debt", "liquidity", "quick",
+         "current", "working", "borrowings"}
+    ),
+    "cash": frozenset(
+        {"cash", "capex", "capital", "expenditure", "expenditures", "dividend", "dividends", "flow", "flows",
+         "buyback", "repurchase"}
+    ),
+    "income": frozenset(
+        {"income", "revenue", "revenues", "sales", "margin", "margins", "profit", "profits", "ebitda",
+         "operating", "earnings", "tax", "expense", "expenses", "cost", "costs", "eps", "diluted"}
+    ),
+}
+_AFFINITY_BONUS = 0.8
 _ACRONYMS = {
     "r&d": "research development",
     "d&a": "depreciation amortization",
@@ -69,6 +84,8 @@ _MAX_CANDIDATES = 200
 _HEADING_CHARS = 300
 _RRF_OFFSET = 60
 _RRF_WEIGHT = 0.6
+_SINGLE_TERM_WEIGHT = 0.5
+_SYNONYM_WEIGHT = 0.3
 
 # Financial-report questions rarely repeat the filing's own vocabulary: a question about
 # "geographies" is answered by a page that lists countries and businesses. Expanding a few
@@ -177,12 +194,12 @@ async def search_pdf_pages(
     from powercontext.builtin.runtime.models import GetMemoryEntryRequest, SearchMemoryRequest
 
     scored: dict[tuple[str, str, str], tuple[MemoryHit, float]] = {}
-    for subquery in _subqueries(terms, expanded, question):
+    for subquery, weight in _subqueries(terms, expanded, question):
         page = await memory.search(SearchMemoryRequest(query=subquery, mode="fts", limit=_HITS_PER_QUERY))  # type: ignore[attr-defined]
         for rank, hit in enumerate(page.hits, start=1):
             identifier = (hit.memory_ref.artifact_id, hit.entry_id, hit.entry_version_id)
             current = scored.get(identifier)
-            contribution = 1.0 / (_RRF_OFFSET + rank)
+            contribution = weight / (_RRF_OFFSET + rank)
             if current is None:
                 scored[identifier] = (hit, contribution)
             else:
@@ -192,18 +209,16 @@ async def search_pdf_pages(
         return ()
     hits = tuple(hit for hit, _ in scored.values())
     fused = tuple(contribution for _, contribution in scored.values())
-    lexical = _rank_scores(expanded, tuple(hit.text for hit in hits))
+    lexical = _rank_scores(expanded, tuple(hit.text for hit in hits), _affinity_hints(terms))
     scores = [
         lexical[index] / max(lexical) + _RRF_WEIGHT * fused[index] / max(fused)
         for index in range(len(hits))
     ]
-    ordered = [
-        hit
-        for _score, hit in sorted(
-            zip(scores, hits, strict=True),
-            key=lambda pair: (-pair[0], pair[1].entry_id),
-        )
-    ][:_MAX_CANDIDATES]
+    ranked = sorted(
+        zip(scores, hits, strict=True),
+        key=lambda pair: (-pair[0], pair[1].entry_id),
+    )[:_MAX_CANDIDATES]
+    ordered = [hit for _score, hit in ranked]
     citations: list[MemoryCitation] = []
     seen_pages: set[str] = set()
     for hit in ordered:
@@ -317,26 +332,46 @@ def _expand_terms(terms: tuple[str, ...], /) -> tuple[str, ...]:
         for synonym in _EXPANSIONS.get(term, ()):
             if synonym not in expanded:
                 expanded.append(synonym)
+    for term in terms[:6]:
+        for form in _variants(term):
+            if form not in expanded:
+                expanded.append(form)
     return tuple(expanded)
 
 
-def _synonyms(term: str, /) -> tuple[str, ...]:
-    return (*_EXPANSIONS.get(term, ()), *(_form for _form in _variants(term) if _form != term))
-
-
-def _subqueries(terms: tuple[str, ...], expanded: tuple[str, ...], question: str, /) -> tuple[str, ...]:
-    """Ask several short questions because long FTS queries are admitted too sparsely."""
+def _subqueries(
+    terms: tuple[str, ...],
+    expanded: tuple[str, ...],
+    question: str,
+    /,
+) -> tuple[tuple[str, float], ...]:
+    """Return short probes with the weight each earned in the fused ranking."""
 
     focused = terms[:_MAX_QUERY_TERMS]
-    queries = [" ".join(pair) for pair in combinations(focused, 2)]
-    queries.extend(focused)
-    for term in terms[:6]:
-        queries.extend(f"{term} {synonym}" for synonym in _synonyms(term))
-    queries.append(question)
+    queries: list[tuple[str, float]] = [(" ".join(pair), 1.0) for pair in combinations(focused, 2)]
+    queries.extend((term, _SINGLE_TERM_WEIGHT) for term in focused)
+    queries.extend((term, _SYNONYM_WEIGHT) for term in expanded if term not in terms)
+    queries.append((question, 1.0))
     return tuple(queries)
 
 
-def _rank_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[float]:
+def _affinity_hints(terms: tuple[str, ...], /) -> tuple[re.Pattern[str], ...]:
+    """Map the metrics a question names onto the statement that reports them."""
+
+    lowered = {term.casefold() for term in terms}
+    return tuple(
+        _STATEMENT_PATTERNS[kind]
+        for kind, keywords in _AFFINITY_KEYWORDS.items()
+        if lowered & keywords
+    )
+
+
+def _rank_scores(
+    terms: tuple[str, ...],
+    texts: tuple[str, ...],
+    hints: tuple[re.Pattern[str], ...] = (),
+    /,
+) -> list[float]:
     """Rank pages by BM25 plus heading position and rare-term presence.
 
     Financial reports carry the section title at the top of a page, so a query term in the
@@ -375,10 +410,11 @@ def _rank_scores(terms: tuple[str, ...], texts: tuple[str, ...], /) -> list[floa
             score += 1.5 * covered / len(rarest) * idf.get(rarest[0], 0.0)
         scores.append(score)
     peak = max(scores) if scores else 0.0
-    if peak > 0:
+    if hints and peak > 0:
         for index, original in enumerate(texts):
-            if _STATEMENT_HEADING.search(original[:_HEADING_CHARS].lower()):
-                scores[index] += _STATEMENT_BONUS * peak
+            leading = original[:_HEADING_CHARS].lower()
+            if any(hint.search(leading) for hint in hints):
+                scores[index] += _AFFINITY_BONUS * peak
     return scores
 
 
