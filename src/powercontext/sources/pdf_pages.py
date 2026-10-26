@@ -109,6 +109,13 @@ _EXPANSIONS: dict[str, tuple[str, ...]] = {
     "debt": ("borrowings", "notes", "obligations"),
     "dividends": ("payout", "repurchase"),
     "risk": ("uncertainties", "factors"),
+    "liquidity": ("cash", "assets", "liabilities", "current", "receivables"),
+    "quick": ("cash", "receivables", "current", "assets"),
+    "ratio": ("assets", "liabilities", "current"),
+    "cyclicality": ("cyclical", "cycle", "economic"),
+    "categories": ("segment", "segments", "products", "services"),
+    "customers": ("customer", "clients"),
+    "concentration": ("customers", "percent"),
     "acquisitions": ("acquired", "divestitures", "transaction"),
     "climate": ("environmental", "emissions", "sustainability"),
 }
@@ -313,16 +320,23 @@ def _question_terms(question: str, /) -> tuple[str, ...]:
 
 
 def _variants(term: str, /) -> tuple[str, ...]:
+    """Return only the inflections that can plausibly be a real word."""
+
+    if not term.isalpha() or len(term) < 4:
+        return (term,)
+    if term.endswith(("ly", "ed", "ing", "ous", "ive", "al", "ic", "ss")):
+        return (term,)
     forms = {term}
-    if len(term) > 3:
-        if term.endswith("y"):
-            forms.add(term[:-1] + "ies")
-        elif term.endswith(("s", "x", "z", "ch", "sh")):
-            forms.add(term + "es")
-        elif not term.endswith("s"):
-            forms.add(term + "s")
-        if term.endswith("s"):
-            forms.add(term[:-1])
+    if term.endswith("ies"):
+        forms.add(term[:-3] + "y")
+    elif term.endswith("y"):
+        forms.add(term[:-1] + "ies")
+    elif term.endswith(("s", "x", "z", "ch", "sh")):
+        forms.add(term + "es")
+    else:
+        forms.add(term + "s")
+    if term.endswith("s") and not term.endswith("ss"):
+        forms.add(term[:-1])
     return tuple(forms)
 
 
