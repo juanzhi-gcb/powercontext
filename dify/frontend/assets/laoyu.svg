@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 620" role="img" aria-labelledby="title desc">
+  <title id="title">老余</title>
+  <desc id="desc">烦恼典当行的掌柜，灰白卷发、圆眼镜、米色衬衫与深色围裙，在暖灯下拿着印章。</desc>
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2c69c"/>
+      <stop offset=".62" stop-color="#e3b083"/>
+      <stop offset="1" stop-color="#c98c60"/>
+    </linearGradient>
+    <linearGradient id="skinShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7d2ab"/>
+      <stop offset=".55" stop-color="#e6b286"/>
+      <stop offset="1" stop-color="#c98e63"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#efeae0"/>
+      <stop offset=".55" stop-color="#cfc6b6"/>
+      <stop offset="1" stop-color="#a79c8b"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4ead6"/>
+      <stop offset="1" stop-color="#d7c6a8"/>
+    </linearGradient>
+    <linearGradient id="apron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d342d"/>
+      <stop offset="1" stop-color="#221b17"/>
+    </linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0cd8c"/>
+      <stop offset=".5" stop-color="#c29352"/>
+      <stop offset="1" stop-color="#7c5624"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf3df"/>
+      <stop offset="1" stop-color="#e3d1ab"/>
+    </linearGradient>
+    <radialGradient id="rim" cx=".42" cy=".38" r=".62">
+      <stop offset="0" stop-color="#ffc578" stop-opacity=".5"/>
+      <stop offset=".6" stop-color="#ffb35e" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#ffb35e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="soft2" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- 暖灯轮廓光 -->
+  <ellipse cx="262" cy="300" rx="240" ry="270" fill="url(#rim)" opacity=".9"/>
+
+  <!-- 身体：衬衫 -->
+  <path d="M136 620 L146 402 Q158 342 214 324 L260 316 L306 324 Q362 342 374 402 L384 620 Z" fill="url(#shirt)"/>
+  <path d="M218 330 L260 360 L302 330 L318 348 L276 382 L244 382 L202 348 Z" fill="#c9b795" opacity=".8"/>
+  <path d="M246 360 L260 392 L274 360 L266 352 L254 352 Z" fill="#b9a483" opacity=".55"/>
+
+  <!-- 脖子与下巴阴影 -->
+  <path d="M232 300 L232 342 Q260 366 288 342 L288 300 Z" fill="#c88f66"/>
+  <path d="M232 316 Q260 344 288 316 L288 300 L232 300 Z" fill="#b87c55" opacity=".55"/>
+
+  <!-- 围裙 -->
+  <path d="M176 620 L176 438 Q178 404 214 392 L306 392 Q342 404 344 438 L344 620 Z" fill="url(#apron)"/>
+  <path d="M206 392 L198 326 L216 322 L226 390 Z" fill="#2a231e"/>
+  <path d="M314 392 L322 326 L304 322 L294 390 Z" fill="#2a231e"/>
+  <rect x="196" y="334" width="24" height="12" rx="3" fill="url(#brass)" transform="rotate(-9 208 340)"/>
+  <rect x="300" y="334" width="24" height="12" rx="3" fill="url(#brass)" transform="rotate(9 312 340)"/>
+  <path d="M176 470 Q260 492 344 470 L344 500 Q260 522 176 500 Z" fill="#1b1512" opacity=".55"/>
+  <path d="M196 560 L324 560" stroke="#000" stroke-opacity=".25" stroke-width="3"/>
+  <circle cx="196" cy="560" r="5" fill="url(#brass)"/>
+  <circle cx="324" cy="560" r="5" fill="url(#brass)"/>
+
+  <!-- 名牌 -->
+  <g transform="rotate(-2 300 430)">
+    <rect x="286" y="414" width="64" height="30" rx="3" fill="url(#paper)" stroke="#8a6a3e" stroke-width="1.5"/>
+    <text x="318" y="434" text-anchor="middle" font-family="'Songti SC','SimSun',serif" font-size="15" fill="#3a2a1c" letter-spacing="2">老余</text>
+  </g>
+
+  <!-- 手臂与手 -->
+  <path d="M162 404 Q132 486 158 548 Q170 574 198 572 L206 548 Q182 540 176 514 Q166 470 184 420 Z" fill="url(#shirt)"/>
+  <path d="M358 404 Q388 486 362 548 Q350 574 322 572 L314 548 Q338 540 344 514 Q354 470 336 420 Z" fill="url(#shirt)"/>
+  <path d="M158 548 Q150 578 176 590 Q204 600 214 578 L210 552 Q184 560 166 540 Z" fill="url(#skinShade)"/>
+  <path d="M362 548 Q370 578 344 590 Q316 600 306 578 L310 552 Q336 560 354 540 Z" fill="url(#skinShade)"/>
+  <path d="M176 560 Q186 556 196 562 M184 574 Q194 570 204 576 M330 560 Q340 556 350 562 M322 574 Q332 570 342 576" stroke="#a9704c" stroke-width="2" fill="none" opacity=".6"/>
+
+  <!-- 右手的印章 -->
+  <g transform="rotate(12 318 520)">
+    <rect x="312" y="470" width="13" height="58" rx="5" fill="url(#brass)"/>
+    <rect x="302" y="524" width="34" height="12" rx="3" fill="#a83a31"/>
+    <rect x="304" y="536" width="30" height="5" rx="2" fill="#7e2822"/>
+  </g>
+
+  <!-- 左手的当票 -->
+  <g transform="rotate(-9 176 556)">
+    <rect x="146" y="536" width="62" height="34" rx="2" fill="url(#paper)" stroke="#b79a6a" stroke-width="1"/>
+    <path d="M154 546 H200 M154 554 H196 M154 562 H188" stroke="#7d6547" stroke-width="1.6" opacity=".7"/>
+    <rect x="176" y="556" width="20" height="14" rx="1" fill="none" stroke="#c2453c" stroke-width="1.6" opacity=".8" transform="rotate(-6 186 563)"/>
+  </g>
+
+  <!-- 耳朵 -->
+  <ellipse cx="178" cy="252" rx="17" ry="24" fill="url(#skinShade)"/>
+  <ellipse cx="342" cy="252" rx="17" ry="24" fill="url(#skinShade)"/>
+  <path d="M176 246 Q184 252 178 262" stroke="#b87c55" stroke-width="2" fill="none" opacity=".6"/>
+  <path d="M344 246 Q336 252 342 262" stroke="#b87c55" stroke-width="2" fill="none" opacity=".6"/>
+
+  <!-- 头发（后层）：短一些的灰白卷发，露出更多脸 -->
+  <ellipse cx="260" cy="198" rx="96" ry="86" fill="url(#hair)"/>
+  <circle cx="178" cy="244" r="26" fill="url(#hair)"/>
+  <circle cx="342" cy="244" r="26" fill="url(#hair)"/>
+  <circle cx="200" cy="152" r="32" fill="url(#hair)"/>
+  <circle cx="258" cy="132" r="36" fill="url(#hair)"/>
+  <circle cx="318" cy="152" r="32" fill="url(#hair)"/>
+  <path d="M184 238 Q174 266 180 298 L194 302 Q190 264 200 240 Z" fill="url(#hair)"/>
+  <path d="M336 238 Q346 266 340 298 L326 302 Q330 264 320 240 Z" fill="url(#hair)"/>
+
+  <!-- 脸 -->
+  <path d="M186 226 Q186 150 260 148 Q334 150 334 226 L334 266 Q332 330 288 352 Q260 364 232 352 Q188 330 186 266 Z" fill="url(#skin)"/>
+  <path d="M186 226 Q186 160 232 150 Q206 190 206 240 Q206 300 232 334 Q188 318 186 262 Z" fill="#f6cba1" opacity=".45"/>
+  <path d="M214 306 Q260 348 306 306 Q300 350 260 362 Q220 350 214 306 Z" fill="#b39a83" opacity=".22"/>
+  <path d="M334 226 Q334 160 288 150 Q314 190 314 240 Q314 300 288 334 Q332 318 334 262 Z" fill="#b87c55" opacity=".22"/>
+
+  <!-- 前层卷发 -->
+  <circle cx="196" cy="186" r="20" fill="url(#hair)"/>
+  <circle cx="224" cy="166" r="22" fill="url(#hair)"/>
+  <circle cx="258" cy="158" r="24" fill="url(#hair)"/>
+  <circle cx="292" cy="164" r="22" fill="url(#hair)"/>
+  <circle cx="320" cy="184" r="20" fill="url(#hair)"/>
+  <path d="M190 200 Q206 178 226 186 Q210 196 200 214 Z" fill="#b9af9f" opacity=".55"/>
+  <path d="M330 200 Q314 178 294 186 Q310 196 320 214 Z" fill="#b9af9f" opacity=".55"/>
+
+  <!-- 眉毛：更粗、更靠近眼镜，避免显得柔弱 -->
+  <path d="M188 208 Q208 194 232 203" stroke="#7f7466" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M288 203 Q312 194 332 208" stroke="#7f7466" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <path d="M196 216 Q210 208 226 212" stroke="#a89d8d" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7"/>
+  <path d="M294 212 Q310 208 324 216" stroke="#a89d8d" stroke-width="2" stroke-linecap="round" fill="none" opacity=".7"/>
+
+  <!-- 眼镜 -->
+  <g stroke="#3b2c21" stroke-width="4.5" fill="rgba(255,244,214,.10)">
+    <circle cx="216" cy="240" r="35"/>
+    <circle cx="304" cy="240" r="35"/>
+    <path d="M251 238 Q260 232 269 238" fill="none"/>
+    <path d="M181 234 L166 230" fill="none"/>
+    <path d="M339 234 L354 230" fill="none"/>
+  </g>
+  <path d="M196 226 Q204 216 214 216" stroke="#fff6de" stroke-width="3" stroke-linecap="round" fill="none" opacity=".65"/>
+  <path d="M284 226 Q292 216 302 216" stroke="#fff6de" stroke-width="3" stroke-linecap="round" fill="none" opacity=".65"/>
+
+  <!-- 笑眼 -->
+  <path d="M198 246 Q216 258 234 246" stroke="#3a2a1e" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M286 246 Q304 258 322 246" stroke="#3a2a1e" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M196 262 Q210 268 224 264" stroke="#b87c55" stroke-width="2" stroke-linecap="round" fill="none" opacity=".45"/>
+  <path d="M296 264 Q310 268 324 262" stroke="#b87c55" stroke-width="2" stroke-linecap="round" fill="none" opacity=".45"/>
+
+  <!-- 鼻子与嘴 -->
+  <path d="M260 250 Q254 266 262 272" stroke="#b87c55" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M236 292 Q260 308 284 292" stroke="#8f5538" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M244 292 Q260 298 276 292" stroke="#c98e63" stroke-width="2" stroke-linecap="round" fill="none" opacity=".6"/>
+  <path d="M230 282 Q238 276 246 280" stroke="#a9704c" stroke-width="1.6" fill="none" opacity=".45"/>
+  <path d="M274 280 Q282 276 290 282" stroke="#a9704c" stroke-width="1.6" fill="none" opacity=".45"/>
+
+  <!-- 额头与眼角细纹 -->
+  <path d="M232 190 Q260 184 288 190" stroke="#c98e63" stroke-width="1.4" fill="none" opacity=".45"/>
+  <path d="M228 200 Q260 194 292 200" stroke="#c98e63" stroke-width="1.2" fill="none" opacity=".32"/>
+  <path d="M348 246 Q358 250 356 262" stroke="#c98e63" stroke-width="1.4" fill="none" opacity=".4"/>
+  <path d="M172 246 Q162 250 164 262" stroke="#c98e63" stroke-width="1.4" fill="none" opacity=".4"/>
+
+  <!-- 冷暖轮廓光 -->
+  <path d="M184 210 Q176 286 204 332" stroke="#ffcf8f" stroke-width="10" stroke-linecap="round" fill="none" opacity=".18" filter="url(#soft)"/>
+  <path d="M338 214 Q350 284 322 330" stroke="#7fd8d0" stroke-width="8" stroke-linecap="round" fill="none" opacity=".13" filter="url(#soft)"/>
+  <path d="M180 440 Q168 520 190 566" stroke="#ffcf8f" stroke-width="9" stroke-linecap="round" fill="none" opacity=".12" filter="url(#soft)"/>
+</svg>

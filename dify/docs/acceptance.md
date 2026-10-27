@@ -10,18 +10,19 @@
 
 | 类别 | 执行方式 | 实际结果 | 证据 |
 |---|---|---|---|
-| 1. 后端行为测试 | `uv run --project backend --group dev pytest tests/backend -q` | 23 passed | 命令输出 |
-| 1. DSL 节点与静态检查 | `uv run --project backend --group dev pytest tests/test_dsl.py -q` | 61 passed | 命令输出 |
+| 1. 后端行为测试 | `uv run --project backend --group dev pytest tests/backend -q` | 34 passed；含迁移、跨进程认领、限流、分页/导出、记忆压缩、召回引用、BFF 会话 | 命令输出 |
+| 1. DSL 节点与静态检查 | `uv run --project backend --group dev pytest tests/test_dsl.py tests/test_console_login.py -q` | 62 passed | 命令输出 |
 | 2. 真实后端 + 真实 PowerContext | `uv run --project backend python scripts/verify_services.py` | passed；纠正、确认典当、跨会话召回、回访、货架隔离、跨玩家拒绝、重复提交、取回 | [services.json](evidence/services.json)，标记 `dify_model_executed: false` |
 | 3. 真实 Dify 导入与干净重导入 | `uv run --project backend --group dev python scripts/configure_dify.py --root D:/DifyPawnshop [--new-app]` | completed，16 节点；`model_executed: false` | [dify-import.json](evidence/dify-import.json)、[dify-reimport.json](evidence/dify-reimport.json) |
 | 3. 真实 Dify 应用发布 | Dify 控制台发布 + 模型 provider 绑定 | published | [dify-publish.json](evidence/dify-publish.json) |
 | 4. 真实 Dify + 真实模型端到端 | `uv run --project backend python scripts/verify_e2e.py --root D:/DifyPawnshop` | 连续两次均 passed；鉴定、纠正、确认典当、新会话召回、回访转化、玩家隔离 6 步 | [e2e.json](evidence/e2e.json)、[e2e-repeat.json](evidence/e2e-repeat.json)，标记 `model_executed: true` |
+| 5. 浏览器界面 + BFF + 真实模型 | `npm install && npm run verify:ui`（无头 Edge） | passed；鉴定、纠正、确认典当、货架、记忆来历、第二浏览器当票认领、手机布局 | [ui-home.png](evidence/ui-home.png)、[ui-appraise.png](evidence/ui-appraise.png)、[ui-provenance.png](evidence/ui-provenance.png)、[ui-mobile.png](evidence/ui-mobile.png) |
 
 `verify_services.py` 只覆盖第 2 类：它直接调用真实后端与 PowerContext HTTP，使用脚本构造的虚构请求，不启动 Dify、不调用模型。第 4 类由 `verify_e2e.py` 覆盖：它通过 Dify 服务 API 驱动已发布应用，再用控制台 API 读回同一 `workflow_run_id` 的节点执行记录，因此证据里保存的是 prepare 节点实际交给模型的 `memory_status` 与 `memory_context`，而不只是模型的回答文本。
 
 尚未执行、因此不能宣称通过的项目：
 
-- Dify WebApp 在浏览器/设备之间的登录身份连续性（API 场景已用固定 `user` + 新 `conversation_id` 验证）。
+- Dify 自带 WebApp 在浏览器/设备之间的登录身份连续性。自定义前端已用签名当票解决同一问题并实测跨浏览器认领；Dify WebApp 本身仍取决于其登录方式。
 - 换机器按手册从零复现的完整流程（本机路径已验证）。
 - PowerContext 中断期间的真实 Dify 对话表现（后端层面的 pending/unavailable 行为已有自动化测试）。
 
@@ -63,6 +64,20 @@ uv run --project backend python scripts/verify_e2e.py --root D:/DifyPawnshop
 
 每一步都会从该轮 `workflow_run_id` 的节点执行记录中提取 prepare 与 act 的真实输出，连同 Dify 回答一起写入 `docs/evidence/e2e.json`。脚本不读取、不打印任何模型凭据；失败时同样写文件并把该步标记为 failed，不得手工改成通过。
 
+## 浏览器界面脚本
+
+前置条件：服务已启动，Dify 应用已发布并在本机 `deploy/.env` 配好 `DIFY_APP_API_KEY`，Node.js 可用，本机安装了 Microsoft Edge。
+
+```powershell
+Set-Location D:/DifyPawnshop/submission/dify
+npm install
+npm run verify:ui
+```
+
+脚本用无头 Edge 打开 `http://localhost:18081/`，断言：老板台词与藏品卡片分开渲染、卡片动画结束后可见、纠正后卡片名称变化、单独发送「确认典当」后显示已入柜、货架只有一件且「这件的来历」里出现“已写入长期记忆”、第二个干净浏览器用当票认领后看到同一件藏品、手机布局可打开。任何一步失败都会以非零退出码结束，不会写出 `result: passed`。
+
+这一步走的是浏览器 → 后端 BFF → Dify 应用 → 游戏后端 → PowerContext 的真实链路；BFF 不绕过 Dify，也不把 Dify 应用密钥下发到浏览器。
+
 ## 已知限制
 
 - 奇幻物品、比喻和老余的解释是创作性叙事，不是事实诊断、治疗建议或未来预测。
@@ -70,4 +85,6 @@ uv run --project backend python scripts/verify_e2e.py --root D:/DifyPawnshop
 - PowerContext 不可用时跨会话记忆不可保证；系统应明确报告不可用或待同步，不可把 SQLite 账本描述为 PowerContext 的召回证据。
 - Dify WebApp 的浏览器用户身份连续性取决于实际部署和登录方式，不能假定换浏览器后自动沿用同一游戏玩家。
 - PowerContext 的召回是词法的（jieba 分词 + 查询词覆盖率门槛），自然口语问句通常不足以命中历史记录。因此后端用账本中已有藏品的 ID 与名称构造检索锚点，用户原话仍完整交给模型。若未来更换为向量检索，可再评估这一约定。
+- 记忆文本按“事实优先 + 藏品摘要”压缩，保证单条不超过 PowerContext 的 2000 字节截断线；完整藏品卡仍以 SQLite 账本为准，并通过 `state_json` 交给模型。
+- 自定义前端的人物立绘是项目内原创的 SVG 插画，可按 README 替换为正式立绘；界面验收需要 Node.js 与本机 Edge，未安装时不影响游戏本身。
 - 本文件的记录对应上面写明的本机环境。换机器复现必须重新执行并补充证据；静态文件检查或旧日志不能推出新环境的结果。

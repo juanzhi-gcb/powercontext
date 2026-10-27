@@ -54,6 +54,9 @@ def main() -> None:
     write_new(project / 'deploy' / '.env', '\n'.join([
         'PAWNSHOP_API_KEY=' + secrets.token_urlsafe(32),
         'POWERCONTEXT_TOKEN=' + secrets.token_urlsafe(32),
+        'PAWNSHOP_SESSION_SECRET=' + secrets.token_urlsafe(32),
+        'DIFY_API_URL=http://api:5001/v1',
+        'DIFY_APP_API_KEY=',
         f'POWERCONTEXT_SOURCE={(root / "powercontext-source").as_posix()}',
         'POWERCONTEXT_VERSION=1.4.0',
         f'PAWNSHOP_DATA={data.as_posix()}',

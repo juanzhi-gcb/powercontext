@@ -38,9 +38,10 @@
 
 | 检查 | 结果 |
 |---|---|
-| `pytest tests -q`（后端 + DSL + 控制台登录） | 85 passed |
+| `pytest tests -q`（后端 + DSL + 控制台登录） | 96 passed |
 | `scripts/verify_services.py`（真实后端 + 真实 PowerContext） | passed，见 `docs/evidence/services.json` |
 | `scripts/verify_e2e.py`（真实 Dify + 真实模型，跨会话） | passed，见 `docs/evidence/e2e.json` |
+| `npm run verify:ui`（无头 Edge，BFF + 真实模型 + 跨浏览器当票） | passed，截图在 `docs/evidence/ui-*.png` |
 | `docker compose ... config --quiet` | 通过 |
 
 端到端验收中发现并修复的问题：用户原话直接用作 PowerContext 检索词时，自然口语问句因词法覆盖率不足返回 empty，导致新会话召不回旧藏品。后端改为用账本中的藏品 ID 与名称构造检索锚点，并补了回归测试；修复后真实 Dify 跨会话 prepare 返回 `ready`，召回内容包含玩家纠正原文。

@@ -2,6 +2,8 @@
 
 下面是 2026-10-27 在本机真实运行的摘录：Dify 1.17.1 调用真实模型，后端与 PowerContext 都在运行。玩家是脚本生成的虚构 ID `e2e-1559cc6e37`，内容为验收用的虚构故事。原始记录见 [e2e.json](evidence/e2e.json)。奇幻物件是游戏比喻，不是诊断或预言。
 
+自定义柜台界面的实际截图：[首屏](evidence/ui-home.png)、[鉴定后](evidence/ui-appraise.png)、[记忆来历](evidence/ui-provenance.png)、[手机布局](evidence/ui-mobile.png)。
+
 ## 第一次进店：鉴定
 
 > **玩家**：我最近总拿自己和同龄人比较，看到别人的消息就不舒服。

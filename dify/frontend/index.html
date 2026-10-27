@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>烦恼典当行 · 深夜营业</title>
+<meta name="description" content="把一件烦恼放在柜台上，让老余鉴定成一件奇幻藏品。">
+<meta name="theme-color" content="#06100f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c2453c'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23f2e4c8'%3E当%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+
+<div class="street" aria-hidden="true">
+  <div class="neon neon-left">24H</div>
+  <div class="neon neon-right">烦恼<br>典当行</div>
+  <div class="street-lamp"></div>
+</div>
+
+<main id="shop" class="shop">
+  <header class="sign" aria-label="烦恼典当行">
+    <div class="sign-chain left"></div>
+    <div class="sign-chain right"></div>
+    <div class="sign-plank">
+      <span class="sign-cat" aria-hidden="true">ฅ</span>
+      <h1>烦恼典当行</h1>
+      <span class="sign-24">24</span>
+      <p>给烦恼估个荒诞的价</p>
+    </div>
+    <p class="sign-sub">深夜营业 · 2:00 仍在等你</p>
+  </header>
+
+  <section class="shelf shelf-left" aria-hidden="true">
+    <div class="shelf-label">今日收购</div>
+    <div class="tag"><span>别人的高光时刻收音机</span><b>300</b></div>
+    <div class="tag"><span>未说出口的话</span><b>150</b></div>
+    <div class="tag"><span>皱巴巴的计划书</span><b>80</b></div>
+    <div class="tag"><span>焦虑的云朵</span><b>200</b></div>
+  </section>
+
+  <section class="shelf shelf-right" aria-hidden="true">
+    <div class="shelf-label">记忆收藏</div>
+    <div class="tag"><span>拖延症沙漏</span><b>120</b></div>
+    <div class="tag"><span>放大缺点的镜子</span><b>180</b></div>
+    <div class="tag"><span>怕说错话的回声铃</span><b>150</b></div>
+  </section>
+
+  <div class="window" aria-hidden="true">
+    <div class="window-rain"></div>
+    <div class="window-sign">深夜<br><b>2:00</b></div>
+    <div class="window-text">雨会停<br>你也是</div>
+  </div>
+
+  <div class="lamp-glow" aria-hidden="true"></div>
+  <figure class="laoyu">
+    <img src="assets/laoyu.svg" alt="老余，烦恼典当行的掌柜，灰白卷发、圆眼镜、深色围裙，在灯下盖章">
+    <figcaption class="laoyu-name">老余</figcaption>
+  </figure>
+
+  <div class="counter" aria-hidden="true">
+    <div class="counter-top"></div>
+    <div class="counter-front">
+      <div class="counter-carving">典当 · 不是结束 · 是给自己一个喘息的空间</div>
+    </div>
+    <div class="desk-lamp"><span></span></div>
+    <div class="stamp-tool"></div>
+    <div class="jar"><span>未说出口的话</span></div>
+  </div>
+
+  <div class="panels">
+  <article class="receipt paper" id="receipt" aria-live="polite">
+    <header class="receipt-head">
+      <span>典当受理单</span>
+      <span class="receipt-no" id="receiptNo">NO. 0001</span>
+    </header>
+    <div class="receipt-body">
+      <p class="speech-label">老余：</p>
+      <div class="speech" id="speech">推门进来吧。柜台在，茶还温着。</div>
+      <p class="speech-meta" id="speechMeta"></p>
+    </div>
+    <div class="receipt-foot">
+      <span class="foot-note">本店只收故事，不收利息</span>
+      <span class="foot-stamp" id="footStamp">未盖章</span>
+    </div>
+  </article>
+
+  <article class="item-card paper" id="itemCard" hidden>
+    <div class="stamp" id="stamp" aria-hidden="true">已收下</div>
+    <h3 id="itemName">—</h3>
+    <p class="item-ticket" id="itemTicket"></p>
+    <dl id="itemFields"></dl>
+    <div class="item-foot">
+      <span id="itemStatus"></span>
+      <button class="link" id="lookupBtn" type="button">这件的来历</button>
+    </div>
+  </article>
+
+  </div>
+
+  <button class="shelf-handle" id="shelfBtn" type="button">
+    <span>货架</span><b id="shelfCount">0</b>
+  </button>
+</main>
+
+<aside class="drawer" id="shelfDrawer" aria-hidden="true" aria-label="我的货架">
+  <header>
+    <h2>我的货架</h2>
+    <button class="close" data-close="shelfDrawer" type="button" aria-label="收起货架">×</button>
+  </header>
+  <div class="drawer-body" id="shelfList"></div>
+</aside>
+
+<aside class="drawer drawer-left" id="provenanceDrawer" aria-hidden="true" aria-label="记忆来历">
+  <header>
+    <h2>这件的来历</h2>
+    <button class="close" data-close="provenanceDrawer" type="button" aria-label="收起来历">×</button>
+  </header>
+  <div class="drawer-body" id="provenanceList"></div>
+</aside>
+
+<footer class="desk">
+  <form class="slip paper" id="form">
+    <textarea id="query" rows="2" maxlength="6000" placeholder="写在一张纸条上，推给老余…" aria-label="输入想说的话"></textarea>
+    <button id="send" type="submit">推过去</button>
+  </form>
+  <div class="desk-row">
+    <div class="chips" id="chips"></div>
+    <div class="desk-info">
+      <span>Enter 发送 · Shift+Enter 换行</span>
+      <button class="link" id="ticketBtn" type="button">当票 <b id="ticketMini">—</b></button>
+      <button class="link" id="newSessionBtn" type="button">重开一段对话</button>
+    </div>
+  </div>
+</footer>
+
+<div class="modal" id="ticketModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="当票">
+  <div class="paper modal-card">
+    <button class="close" data-close="ticketModal" type="button" aria-label="收起当票">×</button>
+    <p class="eyebrow">寄存凭证</p>
+    <h2>你的当票</h2>
+    <div class="ticket-code" id="ticketCode">—</div>
+    <p class="modal-note">凭这张当票，可以在别的浏览器或手机上找回自己的货架。别弄丢，也别随便给人。</p>
+    <div class="modal-actions">
+      <button id="copyTicket" type="button">抄下来</button>
+    </div>
+    <hr>
+    <p class="eyebrow">用旧当票进店</p>
+    <form id="claimForm" class="claim-form">
+      <input id="claimInput" maxlength="20" placeholder="ABCDE-FGHJK" autocomplete="off" spellcheck="false">
+      <button type="submit">认领</button>
+    </form>
+    <p class="modal-error" id="claimError"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

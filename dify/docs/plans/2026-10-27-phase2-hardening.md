@@ -769,6 +769,12 @@ docker compose -p pawnshop-game --env-file deploy/.env -f deploy/compose.yaml co
 
 期望：后端测试全部通过；`verify_services.py` 输出 `result: passed`；compose 校验无输出。
 
+## 执行记录（2026-10-27）
+
+Task 1–6 已实现并通过测试：版本化迁移、跨进程 turn 认领（认领释放后才算最终回执）、SQLite 限流、货架分页与玩家导出、记忆正文压缩到 1850 字节以内、prepare 返回召回记忆引用白名单。同一次改动还落地了浏览器 BFF（签名当票、Dify 代理、只读货架与来历）和自定义前端；`pytest tests` 共 96 项通过，真实 `verify_services.py`、`verify_e2e.py` 与 `npm run verify:ui` 均通过。
+
+尚未实现、转交下一份计划：退票（Atomic lifecycle forgotten + 条件替换）、物品遗忘、两件藏品合成、玩家铭文、时间灰尘、`docs/powercontext-integration.md`、语义召回评估。
+
 ## 后续计划（不在本文件内）
 
 1. `docs/plans/2026-10-27-phase2-memory-gameplay.md`：退票（Atomic lifecycle `forgotten` + 条件替换）、物品遗忘删除（软删除并同步退休记忆）、两件藏品合成、玩家铭文、时间灰尘、记忆溯源接口与 Dify 分支。退票需要本计划 Task 6 的 `memory_refs` 白名单，所以必须排在其后。

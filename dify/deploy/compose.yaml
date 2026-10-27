@@ -22,18 +22,24 @@ services:
       - shared
     restart: unless-stopped
   pawnshop:
-    image: pawnshop-backend:0.1.0
+    image: pawnshop-backend:0.2.0
     build:
-      context: ../backend
+      context: ..
+      dockerfile: backend/Dockerfile
     environment:
       PAWNSHOP_API_KEY: ${PAWNSHOP_API_KEY:?Set PAWNSHOP_API_KEY}
       PAWNSHOP_DB_PATH: /data/pawnshop.sqlite3
+      PAWNSHOP_SESSION_SECRET: ${PAWNSHOP_SESSION_SECRET:-}
       POWERCONTEXT_URL: http://powercontext:8000
       POWERCONTEXT_TOKEN: ${POWERCONTEXT_TOKEN:?Set POWERCONTEXT_TOKEN}
+      DIFY_API_URL: ${DIFY_API_URL:-http://api:5001/v1}
+      DIFY_APP_API_KEY: ${DIFY_APP_API_KEY:-}
     ports:
       - 127.0.0.1:${PAWNSHOP_PORT:-18081}:8080
     volumes:
       - ${PAWNSHOP_DATA:?Set PAWNSHOP_DATA}/pawnshop:/data
+      # Frontend can be edited without rebuilding; the image also contains a copy.
+      - ../frontend:/app/frontend:ro
     depends_on:
       powercontext:
         condition: service_healthy

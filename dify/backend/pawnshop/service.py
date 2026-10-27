@@ -1,7 +1,9 @@
 import html
 import json
 import re
+import time
 import uuid
+from datetime import datetime, timezone
 from threading import Lock
 from weakref import WeakValueDictionary
 
@@ -9,10 +11,13 @@ import httpx
 from fastapi import HTTPException
 
 from .powercontext import ProtocolError
-from .store import dump, item_dict, shelf
+from .store import dump, item_dict, shelf, shelf_page
 
 
 EXTERNAL_ERRORS = (httpx.HTTPError, ProtocolError, ValueError)
+# The adapter appends a ~110-byte Source citation after this body, and the
+# pinned PreparedContextBuilder keeps the first 2000 UTF-8 bytes of an entry.
+MEMORY_BODY_BUDGET = 1850
 STATUS_TEXT = {"not_required": "", "synced": "老余已记下这段故事。", "pending": "交易已保存，长期记忆暂未同步。稍后回来看看，老余会再试着记下。", "unknown": "交易已保存，长期记忆同步结果待核对。请稍后查看货架，无需重复典当。", "failed": "交易已保存，长期记忆暂未同步。请稍后查看货架。"}
 ACTION_TEXT = {"appraise": "鉴定完成", "correct": "鉴定已纠正", "pawn": "已确认典当", "revisit": "回访已记录", "retrieve": "物件已取回", "shelf": "你的货架", "chat": "柜台小叙"}
 ITEM_STATUS_TEXT = {"draft": "鉴定草稿，尚未入柜", "pawned": "已入柜", "transformed": "回访后有了新变化", "retrieved": "已取回，故事留档"}
@@ -91,7 +96,47 @@ def memory_text(event_id, action, item, payload, correction):
     document["fictional_item_card"] = item["card"]
     # Preserve this deliberate order. The ledger's sort_keys=True serializer is
     # suitable for canonical receipts, but would bury these facts after the card.
+    text = _render_memory(document)
+    if len(text.encode("utf-8")) <= MEMORY_BODY_BUDGET - 100:
+        return text
+    # The pinned server truncates one Memory text at 2000 UTF-8 bytes, and the
+    # adapter appends its Source citation afterwards. Keep the player's verbatim
+    # facts and replace the six-field card with a digest that fits, so recall
+    # never silently loses corrections or reported events.
+    fixed = _render_memory({**document, "fictional_item_card": {}})
+    budget = max(64, MEMORY_BODY_BUDGET - 100 - len(fixed.encode("utf-8")))
+    document["fictional_item_card"] = compact_card(item["card"], budget)
+    document["fictional_item_card_compacted"] = True
+    text = _render_memory(document)
+    while len(text.encode("utf-8")) > MEMORY_BODY_BUDGET and document["fictional_item_card"]:
+        document["fictional_item_card"].popitem()
+        text = _render_memory(document)
+    return text
+
+
+def _render_memory(document):
     return "pawnshop " + json.dumps(document, ensure_ascii=False, separators=(",", ":"))
+
+
+def compact_card(card, budget):
+    """Keep whole fields in priority order; shorten the last one to fit the budget."""
+    ordered = ["name", "meaning", "inscription", "trait", "appearance", "quest"]
+    kept = {}
+    used = 2  # braces
+    for field in ordered:
+        value = card[field]
+        size = (len(json.dumps(field, ensure_ascii=False).encode())
+                + len(json.dumps(value, ensure_ascii=False).encode()) + 2)
+        if used + size <= budget:
+            kept[field] = value
+            used += size
+            continue
+        remaining = budget - used
+        if remaining > 80:
+            encoded = value.encode("utf-8")[: remaining - 64].decode("utf-8", errors="ignore")
+            kept[field] = encoded + "…"
+        break
+    return kept
 
 
 def consent(query):
@@ -131,10 +176,49 @@ def render(proposal, item, memory_status, refs, items=None):
 
 
 class Game:
+    CLAIM_LEASE_SECONDS = 120
+
     def __init__(self, store, pc):
         self.store, self.pc = store, pc
         self._turn_locks = WeakValueDictionary()
         self._locks_guard = Lock()
+
+    def player_exists(self, user):
+        with self.store.connect() as conn:
+            return conn.execute("SELECT 1 FROM owners WHERE user_id=?", (user,)).fetchone() is not None
+
+    def register_player(self, user):
+        with self.store.connect(write=True) as conn:
+            conn.execute("INSERT OR IGNORE INTO owners(user_id) VALUES(?)", (user,))
+
+    def _claim_turn(self, turn_id):
+        """Claim an act before touching external memory. A fresh claim means another
+        worker owns this turn; an expired claim is a crashed attempt and may be taken over."""
+        with self.store.connect(write=True) as conn:
+            row = conn.execute("SELECT claimed_at FROM turn_claims WHERE turn_id=?", (turn_id,)).fetchone()
+            current = time.time()
+            if row is None:
+                conn.execute("INSERT INTO turn_claims(turn_id,claimed_at) VALUES(?,?)", (turn_id, current))
+                return True
+            if current - row["claimed_at"] > self.CLAIM_LEASE_SECONDS:
+                conn.execute("UPDATE turn_claims SET claimed_at=? WHERE turn_id=?", (current, turn_id))
+                return True
+            return False
+
+    def _wait_for_receipt(self, turn_id, canonical, timeout=30.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            with self.store.connect() as conn:
+                row = conn.execute("SELECT proposal,response FROM receipts WHERE turn_id=?", (turn_id,)).fetchone()
+                # A receipt written before the external sync is not final; the
+                # owner removes its claim only after the final receipt is stored.
+                claim = conn.execute("SELECT 1 FROM turn_claims WHERE turn_id=?", (turn_id,)).fetchone()
+                if row and not claim:
+                    if row["proposal"] != canonical:
+                        raise HTTPException(409, "同一 turn 已提交不同提案")
+                    return dict(json.loads(row["response"]), replayed=True)
+            time.sleep(0.1)
+        return None
 
     def ensure_scope(self, user):
         with self.store.connect(write=True) as conn:
@@ -163,30 +247,43 @@ class Game:
                 items = shelf(conn, request.user_id)
                 snapshot = snapshot_for(items)
                 conn.execute("INSERT INTO prepares(turn_id,owner,conversation,query,snapshot) VALUES (?,?,?,?,?)", (request.turn_id, request.user_id, request.conversation_id, request.query, dump(snapshot)))
-        status, content = "unavailable", ""
+        status, content, refs = "unavailable", "", []
         try:
             scope = self.ensure_scope(request.user_id)
             self.sync(request.user_id, scope)
-            status, content = self.pc.prepare(scope, recall_query(snapshot, request.query))
+            status, content, refs = self.pc.prepare(scope, recall_query(snapshot, request.query))
         except EXTERNAL_ERRORS:
             pass
         current = snapshot["current_item"]
-        response = {"turn_id": request.turn_id, "state_json": dump(snapshot), "memory_context": content, "memory_status": status, "active_item_id": current["id"] if current else "", "active_version": current["version"] if current else 0}
+        response = {"turn_id": request.turn_id, "state_json": dump(snapshot), "memory_context": content,
+                    "memory_status": status, "memory_refs": refs,
+                    "active_item_id": current["id"] if current else "", "active_version": current["version"] if current else 0}
         with self.store.connect(write=True) as conn:
             conn.execute("UPDATE prepares SET response=COALESCE(response,?) WHERE turn_id=?", (dump(response), request.turn_id))
             return json.loads(conn.execute("SELECT response FROM prepares WHERE turn_id=?", (request.turn_id,)).fetchone()[0])
 
     def act(self, request):
-        # The deployment runs one worker. Serialize duplicate submissions through
-        # the external sync boundary without keeping a database lock open.
-        # Weak references avoid an ever-growing lock table for old workflow ids.
+        # The in-process lock avoids database churn for duplicate submissions in
+        # one worker. The durable claim makes the same guarantee across workers:
+        # whoever does not own the turn waits for the final receipt instead of
+        # writing external memory twice.
+        canonical = dump(request.proposal.model_dump())
         with self._locks_guard:
             turn_lock = self._turn_locks.get(request.turn_id)
             if turn_lock is None:
                 turn_lock = Lock()
                 self._turn_locks[request.turn_id] = turn_lock
         with turn_lock:
-            return self._act(request)
+            if not self._claim_turn(request.turn_id):
+                replayed = self._wait_for_receipt(request.turn_id, canonical)
+                if replayed is not None:
+                    return replayed
+                raise HTTPException(409, "同一 turn 正在处理中，请稍后重试")
+            try:
+                return self._act(request)
+            finally:
+                with self.store.connect(write=True) as conn:
+                    conn.execute("DELETE FROM turn_claims WHERE turn_id=?", (request.turn_id,))
 
     def _act(self, request):
         proposal = request.proposal
@@ -219,7 +316,9 @@ class Game:
             if action == "appraise":
                 if proposal.item_id or proposal.expected_version != 0 or not proposal.card:
                     raise HTTPException(409, "新鉴定需要完整藏品卡，且不能覆盖已有物件")
-                item = {"id": uuid.uuid4().hex, "owner": request.user_id, "version": 1, "status": "draft", "card": proposal.card.model_dump()}
+                item = {"id": uuid.uuid4().hex, "owner": request.user_id, "version": 1, "status": "draft",
+                        "card": proposal.card.model_dump(), "note": "", "lineage": [],
+                        "created_at": datetime.now(timezone.utc).isoformat()}
             elif action == "correct":
                 live = shelf(conn, request.user_id)
                 if item["status"] != "draft" or not live or live[0]["id"] != item["id"] or not snapshot["current_item"] or snapshot["current_item"]["id"] != item["id"] or not proposal.card:
@@ -245,7 +344,13 @@ class Game:
                 if action != "appraise":
                     item["version"] += 1
                 sequence = conn.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM items").fetchone()[0]
-                conn.execute("INSERT INTO items(id,owner,version,status,card,sequence) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,status=excluded.status,card=excluded.card,sequence=excluded.sequence", (item["id"], request.user_id, item["version"], item["status"], dump(item["card"]), sequence))
+                conn.execute("INSERT INTO items(id,owner,version,status,card,sequence,created_at,note,lineage) "
+                             "VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET "
+                             "version=excluded.version,status=excluded.status,card=excluded.card,"
+                             "sequence=excluded.sequence,note=excluded.note,lineage=excluded.lineage",
+                             (item["id"], request.user_id, item["version"], item["status"], dump(item["card"]),
+                              sequence, item.get("created_at") or datetime.now(timezone.utc).isoformat(),
+                              item.get("note", ""), dump(item.get("lineage", []))))
                 event_id = uuid.uuid4().hex
                 payload = {"item": item, "user_input": prepared["query"], "reported_event": proposal.reported_event if action == "revisit" else "", "fiction_notice": "物件卡为虚构游戏设定，不是用户人格或健康事实"}
                 conn.execute("INSERT INTO events(id,item_id,turn_id,action,version,payload) VALUES (?,?,?,?,?,?)", (event_id, item["id"], request.turn_id, action, item["version"], dump(payload)))
@@ -309,10 +414,24 @@ class Game:
                 if status in ("pending", "source_ready"):
                     break
 
-    def items(self, owner):
+    def items(self, owner, limit=50, cursor=None):
+        limit = max(1, min(int(limit), 100))
+        if cursor is not None:
+            try:
+                cursor = int(cursor)
+            except (TypeError, ValueError):
+                raise HTTPException(422, "cursor 无效")
+            if cursor < 1:
+                raise HTTPException(422, "cursor 无效")
+        with self.store.connect() as conn:
+            items, next_cursor = shelf_page(conn, owner, limit, cursor)
+        return {"items": items, "next_cursor": next_cursor}
+
+    def export(self, owner):
         with self.store.connect() as conn:
             items = shelf(conn, owner)
-        return {"items": items}
+        return {"user_id": owner, "exported_at": datetime.now(timezone.utc).isoformat(),
+                "items": [self.detail(owner, item["id"]) for item in items]}
 
     def detail(self, owner, item_id):
         with self.store.connect() as conn:

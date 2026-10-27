@@ -13,6 +13,36 @@ class ProtocolError(ValueError):
     pass
 
 
+def prepared_refs(content):
+    """Exact Atomic Memory refs the pinned builder returned in this context.
+
+    The returned context is untrusted history, but its citations are server-owned
+    identities. Only these refs may be disputed or retired by a later turn.
+    """
+    if not content:
+        return []
+    marker = "BEGIN_POWERCONTEXT_PREPARED_CONTEXT_V1\n"
+    begin = content.find(marker)
+    end = content.find("\nEND_POWERCONTEXT_PREPARED_CONTEXT_V1")
+    if begin < 0 or end < 0:
+        return []
+    try:
+        envelope = json.loads(content[begin + len(marker):end])
+    except ValueError:
+        return []
+    refs = []
+    for entry in envelope.get("items", []):
+        citation = entry.get("citation") or {}
+        ref = citation.get("artifact_ref")
+        if not isinstance(ref, dict):
+            ref = (citation.get("artifact") or {}).get("artifact")
+        if (isinstance(ref, dict) and ref.get("family") == "atomic-memory"
+                and isinstance(ref.get("artifact_id"), str) and type(ref.get("revision")) is int):
+            refs.append({"family": "atomic-memory", "artifact_id": ref["artifact_id"],
+                         "revision": ref["revision"]})
+    return refs
+
+
 class PowerContext:
     def __init__(self, url, token, transport=None):
         self.client = httpx.Client(base_url=url.rstrip("/"), headers={"Authorization": f"Bearer {token}"} if token else {}, timeout=httpx.Timeout(8.0, connect=2.0), transport=transport)
@@ -42,7 +72,8 @@ class PowerContext:
         content = data.get("content")
         if data["status"] == "ready" and (not isinstance(content, str) or not content):
             raise ProtocolError("ready context has no content")
-        return data["status"], content or ""
+        content = content or ""
+        return data["status"], content, prepared_refs(content)
 
     def capture(self, scope, event_id, content):
         data = self.post("/v1/sources/content", {"scope_id": scope, "source_id": "pawnshop-" + event_id, "content": content, "metadata": {"integration": "pawnshop", "event_id": event_id}})

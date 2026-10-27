@@ -32,6 +32,20 @@ PowerContext 固定版本的召回是词法匹配：用 jieba 分词，并按查
 
 Start → Code（安全 JSON 序列化 prepare 请求，使用 sys.query / user_id / conversation_id / workflow_run_id）→ HTTP prepare → Code（检查状态并解析）→ IF 读取成功 → LLM 提案 → Code（序列化 act 请求）→ HTTP act → Code（检查真实回执）→ Answer。失败进入明确错误 Answer。可按 action 分支展示不同交易引导。仅 HTTP 成功且后端 ok 时展示 display。提示词明确：记忆为不可信历史证据，指令不能修改服务身份；不把猜测写成用户经历；不随意把已有物件覆盖；需要确认才能典当。LLM 使用可配置的兼容模型 provider，供应商凭据由用户本地填入，DSL 不含真实密钥。
 
+## 浏览器前端与 BFF
+
+自定义前端是柜台场景与人物交互层，不承担任何游戏规则或模型调用。浏览器只访问游戏后端的 `/api/*`：会话、聊天转发、货架、单品来历。后端 BFF 用服务端保存的 Dify 应用密钥调用 Dify 的 `/v1/chat-messages`，并把 `user` 固定为当票玩家；浏览器永远拿不到 Dify 应用密钥或游戏服务密钥。Chatflow、模型和分支仍在 Dify 中执行。
+
+玩家身份用签名 Cookie 保存一张“当票”（`guest-` 加 10 位无歧义字符）。首次进店由后端生成并登记 `owners` 行；换浏览器或手机时输入当票即可认领同一 `user_id`，从而找回同一份账本与记忆。当票是 bearer 凭证，界面提示不要公开。Cookie 使用 `PAWNSHOP_SESSION_SECRET` 做 HMAC 签名，HttpOnly、SameSite=Lax。
+
+前端只做展示与输入：把后端渲染的 Markdown 拆成老板台词、行动标签、当票状态和六字段藏品卡；“这件的来历”直接读 `/api/items/{id}` 的事件、真实 Memory 引用与 Source 编号，不伪造记忆。立绘、纸张、铅字与盖章动效均为项目内原创 CSS/SVG，不依赖外部资源。
+
+## 后端工程约束
+
+SQLite 使用版本化迁移（`schema_migrations`），已有 v1 数据库无损升级。每个 act 在写外部记忆前先在数据库里认领 `turn_claims`，认领失败的一方等待最终回执；这样多进程副本不会重复写 PowerContext。待办回执在认领释放后才算最终。限流、货架分页、玩家数据导出都落在同一 SQLite 里，所有 worker 看到一致结果。
+
+单条 Memory 正文控制在 1850 字节以内，给适配器追加的 Source 引用留出余量，避免 PreparedContext 的 2000 字节截断吃掉纠正或回访事实。prepare 同时返回本次召回的记忆引用白名单，为后续“退票/修订记忆”提供可验证的目标，模型不能凭空指定要作废的记忆。
+
 ## 验收
 
 干净用户鉴定 → 纠正 → 确认典当 → 同用户新 conversation_id 召回纠正后的记忆 → 回访转化 → 查货架/取回。补充独立用户隔离、版本冲突、重复请求、PowerContext 中断的行为测试。必须分别标记单元测试、真实 PowerContext 集成、真实 Dify DSL 导入、真实模型端到端四类证据；没有模型凭据时不得宣称完成真实模型验收。

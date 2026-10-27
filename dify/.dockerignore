@@ -1,0 +1,13 @@
+# The build context is dify/ so the image can copy both backend/ and frontend/.
+# Never send local secrets or test state to the daemon.
+.env
+deploy/.env
+**/.env
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.pytest_cache
+tests
+docs
+scripts
+cache

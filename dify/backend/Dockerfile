@@ -3,8 +3,10 @@ FROM python:3.12.14-slim-bookworm
 COPY --from=uv /uv /uvx /bin/
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-COPY pyproject.toml uv.lock ./
-COPY pawnshop ./pawnshop
+COPY backend/pyproject.toml backend/uv.lock ./
+COPY backend/pawnshop ./pawnshop
+COPY frontend /app/frontend
+ENV PAWNSHOP_FRONTEND=/app/frontend
 RUN uv sync --frozen --no-dev && mkdir -p /data && useradd --uid 10001 --no-create-home pawnshop && chown pawnshop:pawnshop /data
 USER pawnshop
 EXPOSE 8080

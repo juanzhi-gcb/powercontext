@@ -11,58 +11,7 @@ from fastapi.testclient import TestClient
 CARD = dict(name="迟到的月亮", appearance="银色小钟", trait="总慢半拍", meaning="允许慢一点", inscription="不必赶路", quest="散步十分钟")
 
 
-class PowerContextHTTP:
-    """Wire-level fixture: no fake adapter is injected into the game."""
-    def __init__(self):
-        self.requests = []
-        self.memories = {}
-        self.offline = False
-        self.ambiguous = False
-        self.write_entered = None
-        self.write_release = None
-        self.bad_source_receipt = False
-
-    def __call__(self, request):
-        if self.offline:
-            raise httpx.ConnectError("offline", request=request)
-        body = json.loads(request.content)
-        self.requests.append((request.url.path, body))
-        assert request.headers["authorization"] == "Bearer pc-test"
-        if request.url.path == "/v1/scopes":
-            return httpx.Response(201, json={"scope_id": body["idempotency_key"]})
-        if request.url.path == "/v1/sources/content":
-            return httpx.Response(202, json={"status": "accepted" if not self.bad_source_receipt else "rejected", "source": {"name": "content", "source_id": body["source_id"]}, "position": 1})
-        if request.url.path == "/v1/memory/remember":
-            if self.write_entered is not None:
-                self.write_entered.set()
-                assert self.write_release.wait(5), "test did not release write"
-            self.memories.setdefault(body["scope_id"], []).append(body["text"])
-            if self.ambiguous:
-                raise httpx.ReadTimeout("response lost after write", request=request)
-            return httpx.Response(200, json={"changed": True, "records": [{"artifact": {"family": "atomic-memory", "artifact_id": f"m{len(self.memories[body['scope_id']])}", "revision": 1}}]})
-        if request.url.path == "/v1/context/prepare":
-            # Emulate the pinned server's lexical admission floor: a memory is
-            # returned only when the query carries terms that occur in it. The
-            # shared "pawnshop" anchor alone is not enough evidence, so it is
-            # excluded just like the server's admission math requires several
-            # distinct query terms.
-            tokens = [token for token in body["query"].split() if token != "pawnshop"]
-            admitted = [text for text in self.memories.get(body["scope_id"], [])
-                        if any(len(token) >= 5 and token in text for token in tokens)]
-            content = "\n".join(admitted)
-            assert body["query"].startswith("pawnshop ")
-            return httpx.Response(200, json={"schema": "powercontext.prepared-context.v1", "status": "ready" if content else "empty", "content": content or None, "content_bytes": len(content.encode())})
-        raise AssertionError(request.url.path)
-
-
-@pytest.fixture
-def game(tmp_path):
-    from pawnshop.app import create_app
-    wire = PowerContextHTTP()
-    db = tmp_path / "ledger.sqlite3"
-    app = create_app(db_path=str(db), api_key="test-secret", powercontext_url="http://pc", powercontext_token="pc-test", transport=httpx.MockTransport(wire))
-    with TestClient(app, headers={"X-Pawnshop-Key": "test-secret"}) as client:
-        yield client, wire, db
+from helpers import PowerContextHTTP  # noqa: E402
 
 
 def prepare(client, turn, query="最近总觉得来不及", user="alice", conversation="c1"):
@@ -434,7 +383,34 @@ def test_powercontext_2000_byte_entry_prefix_retains_correction_and_event(game):
     document = json.loads(text.removeprefix("pawnshop ").split("\nSource audit citation:")[0])
     assert document["user_correction"]["truncated"] is True
     assert document["user_reported_event_truncated"] is True
+    assert document["fictional_item_card_compacted"] is True
     assert event.startswith(document["user_reported_event"])
     assert len(text.encode("utf-8")) <= 8192
     audit = [body for path, body in wire.requests if path == "/v1/sources/content"][-1]
     assert json.loads(audit["content"])["reported_event"] == event
+
+
+def test_memory_entry_is_compacted_instead_of_truncated(game):
+    client, wire, _ = game
+    draft(client)
+    card = {name: "银" * 250 for name in CARD}
+    prepare(client, "compact-correction", "我不是嫉妒，我是觉得努力没有被看见。")
+    assert act(client, "compact-correction", "correct", card=card).status_code == 200
+    prepare(client, "compact-pawn", "确认典当")
+    assert act(client, "compact-pawn", "pawn").status_code == 200
+    text = [body["text"] for path, body in wire.requests if path == "/v1/memory/remember"][-1]
+    assert len(text.encode("utf-8")) <= 2000
+    document = json.loads(text.removeprefix("pawnshop ").split("\nSource audit citation:")[0])
+    assert document["user_correction"]["text"] == "我不是嫉妒，我是觉得努力没有被看见。"
+    assert document["fictional_item_card_compacted"] is True
+    assert document["fictional_item_card"]["name"].startswith("银")
+
+
+def test_prepare_returns_recalled_memory_refs(game):
+    client, _, _ = game
+    pawn(client)
+    recalled = prepare(client, "refs-session", conversation="c2").json()
+    assert recalled["memory_status"] == "ready"
+    assert recalled["memory_refs"]
+    assert recalled["memory_refs"][0]["family"] == "atomic-memory"
+    assert isinstance(recalled["memory_refs"][0]["revision"], int)

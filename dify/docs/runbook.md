@@ -37,7 +37,7 @@ uv run --no-project --python 3.12 python scripts/manage.py up --root D:/DifyPawn
 uv run --no-project --python 3.12 python scripts/manage.py status --root D:/DifyPawnshop
 ```
 
-服务入口：Dify `http://localhost:18080`，游戏后端 `http://localhost:18081`，PowerContext `http://localhost:18082`。Dify 使用单独的 Compose project `pawnshop-dify`；游戏服务使用 `pawnshop-game`。`manage.py down` 会停止这两组服务，但保留持久数据和共享网络：
+服务入口：自定义柜台界面 `http://localhost:18081/`，Dify `http://localhost:18080`，游戏后端 `http://localhost:18081`，PowerContext `http://localhost:18082`。Dify 使用单独的 Compose project `pawnshop-dify`；游戏服务使用 `pawnshop-game`。`manage.py down` 会停止这两组服务，但保留持久数据和共享网络：
 
 ```powershell
 uv run --no-project --python 3.12 python scripts/manage.py down --root D:/DifyPawnshop
@@ -84,6 +84,29 @@ uv run --project backend --group dev python scripts/configure_dify.py --root D:/
 ```
 
 这会创建另一份应用并记录 `dify-reimport.json`。该脚本验证真实 Dify 导入，不会配置模型 provider、发布应用或执行对话；这些步骤仍须人工完成并分别记录。若 Dify 已初始化但本地 `local-credentials.json` 不存在，脚本不会重置账号；请在 Dify 中手动创建/使用管理员凭据，再按项目流程导入。
+
+## 自定义前端与当票
+
+前端由游戏后端在同一端口提供（`http://localhost:18081/`），不需要单独的 Web 服务。它通过 `/api/*` 访问后端 BFF，BFF 再用服务端保存的密钥调用 Dify 的应用 API，因此浏览器里没有模型密钥，也没有游戏服务密钥。
+
+启用步骤：
+
+1. 在 Dify 打开已发布的 Chatflow，进入「访问 API」，生成应用 API 密钥。
+2. 把它写入本机 `dify/deploy/.env` 的 `DIFY_APP_API_KEY=`；`DIFY_API_URL` 默认 `http://api:5001/v1`，这是共享 Docker 网络里的 Dify API 服务名。
+3. `PAWNSHOP_SESSION_SECRET` 由 `bootstrap.py` 生成，用于给当票 Cookie 签名；换成新值会让所有浏览器里的当票失效，但存档本身不丢，重新认领即可。
+4. 重新启动游戏服务：`uv run --no-project --python 3.12 python scripts/manage.py up --root D:/DifyPawnshop`。
+
+`deploy/compose.yaml` 把 `dify/frontend` 只读挂载到容器 `/app/frontend`，改界面不需要重建镜像；镜像里也包含一份前端副本，用于不带挂载的运行。前端首次进店会生成一张当票，换浏览器后可在「当票」弹窗里用旧当票认领同一份存档。当票是 bearer 凭证，不要公开。
+
+界面验收（可选，需要 Node.js 与本机 Edge）：
+
+```powershell
+Set-Location D:/DifyPawnshop/submission/dify
+npm install
+npm run verify:ui
+```
+
+脚本会真实走一遍鉴定、纠正、确认典当、货架、记忆来历，并在第二个干净浏览器里认领同一张当票；截图默认写入 `docs/evidence/`。它调用真实模型，耗时约一分钟。
 
 ## 记忆与身份行为
 
