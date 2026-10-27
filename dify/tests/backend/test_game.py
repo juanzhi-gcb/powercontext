@@ -390,6 +390,22 @@ def test_powercontext_2000_byte_entry_prefix_retains_correction_and_event(game):
     assert json.loads(audit["content"])["reported_event"] == event
 
 
+def test_actions_award_persistent_coins_and_replay_does_not_double(game):
+    client, wire, db = game
+    draft(client)
+    assert client.get("/v1/items?user_id=alice").json()["coins"] == 10
+    prepare(client, "coin-pawn", "确认典当")
+    first = act(client, "coin-pawn", "pawn").json()
+    assert first["coin_delta"] == 25
+    assert first["coins"] == 35
+    assert "勇气币 +25 · 现有 35" in first["display"]
+    replay = act(client, "coin-pawn", "pawn").json()
+    assert replay["coins"] == 35 and replay["replayed"] is True
+    assert prepare(client, "coin-recall", conversation="c2").json()["coins"] == 35
+    with sqlite3.connect(db) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM coin_events").fetchone()[0] == 2
+
+
 def test_memory_entry_is_compacted_instead_of_truncated(game):
     client, wire, _ = game
     draft(client)

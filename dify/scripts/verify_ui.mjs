@@ -62,6 +62,8 @@ try {
   check(await page.isVisible('#itemCard'), 'item card did not appear');
   check(await page.$eval('#itemCard', (element) => getComputedStyle(element).opacity) === '1',
     'item card is still animating');
+  check(await page.textContent('#coins') === '10', 'appraise did not award ten coins');
+  check(await page.getAttribute('.laoyu', 'data-mood') === 'warm', 'boss did not warm up after replying');
   await page.screenshot({ path: path.join(OUT, 'ui-appraise.png') });
 
   await say('你鉴定错了，我不是嫉妒他们，我是觉得自己的努力一直没被看见。');
@@ -72,6 +74,7 @@ try {
   await waitLabel(page, '已确认典当');
   const status = await page.textContent('#itemTicket');
   check(status.includes('已入柜'), 'pawn did not reach the counter display');
+  check(await page.textContent('#coins') === '50', 'coins did not accumulate across appraise, correct and pawn');
   await page.screenshot({ path: path.join(OUT, 'ui-pawn.png') });
 
   await page.click('#shelfBtn');

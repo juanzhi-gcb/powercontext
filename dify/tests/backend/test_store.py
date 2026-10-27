@@ -27,12 +27,12 @@ def test_fresh_database_gets_all_migrations_once(tmp_path):
     Store(str(path))
     with sqlite3.connect(path) as conn:
         versions = [row[0] for row in conn.execute("SELECT version FROM schema_migrations ORDER BY version")]
-        assert versions == [1, 2]
+        assert versions == [1, 2, 3]
         columns = {row[1] for row in conn.execute("PRAGMA table_info(items)")}
         assert {"created_at", "lineage", "note"} <= columns
     Store(str(path))
     with sqlite3.connect(path) as conn:
-        assert conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 3
 
 
 def test_existing_version_one_database_is_upgraded_without_data_loss(tmp_path):
@@ -46,4 +46,4 @@ def test_existing_version_one_database_is_upgraded_without_data_loss(tmp_path):
     with sqlite3.connect(path) as conn:
         assert conn.execute("SELECT card FROM items WHERE id='i1'").fetchone()[0] == '{"name":"月亮"}'
         assert conn.execute("SELECT created_at FROM items WHERE id='i1'").fetchone()[0] != ""
-        assert conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 3

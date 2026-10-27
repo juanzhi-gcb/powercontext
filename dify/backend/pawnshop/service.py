@@ -19,6 +19,8 @@ EXTERNAL_ERRORS = (httpx.HTTPError, ProtocolError, ValueError)
 # pinned PreparedContextBuilder keeps the first 2000 UTF-8 bytes of an entry.
 MEMORY_BODY_BUDGET = 1850
 STATUS_TEXT = {"not_required": "", "synced": "老余已记下这段故事。", "pending": "交易已保存，长期记忆暂未同步。稍后回来看看，老余会再试着记下。", "unknown": "交易已保存，长期记忆同步结果待核对。请稍后查看货架，无需重复典当。", "failed": "交易已保存，长期记忆暂未同步。请稍后查看货架。"}
+# Coins record what the player actually did, not how much pain they reported.
+COIN_REWARDS = {"appraise": 10, "correct": 15, "pawn": 25, "revisit": 30, "retrieve": 5}
 ACTION_TEXT = {"appraise": "鉴定完成", "correct": "鉴定已纠正", "pawn": "已确认典当", "revisit": "回访已记录", "retrieve": "物件已取回", "shelf": "你的货架", "chat": "柜台小叙"}
 ITEM_STATUS_TEXT = {"draft": "鉴定草稿，尚未入柜", "pawned": "已入柜", "transformed": "回访后有了新变化", "retrieved": "已取回，故事留档"}
 
@@ -152,7 +154,7 @@ def safe_text(value):
     return re.sub(r"([\\`*_{}\[\]()#+.!|>~-])", r"\\\1", value)
 
 
-def render(proposal, item, memory_status, refs, items=None):
+def render(proposal, item, memory_status, refs, items=None, coins=None, coin_delta=0):
     lines = []
     if proposal.reply:
         lines += ["老余：", "", "> " + safe_text(proposal.reply).replace("\n", "\n> "), ""]
@@ -166,6 +168,8 @@ def render(proposal, item, memory_status, refs, items=None):
         lines += [f"- {safe_text(i['card']['name'])} · 当票 `{i['id'][:8]}` · {ITEM_STATUS_TEXT[i['status']]}" for i in items] or ["货架暂时空着。"]
     if STATUS_TEXT[memory_status]:
         lines += ["", STATUS_TEXT[memory_status]]
+    if coin_delta:
+        lines += ["", f"勇气币 +{coin_delta} · 现有 {coins}"]
     options = ["描述新烦恼", "查看货架"]
     if item and item["status"] == "draft":
         options += ["纠正鉴定", "确认典当 / 确认入柜"]
@@ -247,6 +251,7 @@ class Game:
                 items = shelf(conn, request.user_id)
                 snapshot = snapshot_for(items)
                 conn.execute("INSERT INTO prepares(turn_id,owner,conversation,query,snapshot) VALUES (?,?,?,?,?)", (request.turn_id, request.user_id, request.conversation_id, request.query, dump(snapshot)))
+            coins = conn.execute("SELECT COALESCE(coins,0) FROM owners WHERE user_id=?", (request.user_id,)).fetchone()[0]
         status, content, refs = "unavailable", "", []
         try:
             scope = self.ensure_scope(request.user_id)
@@ -256,7 +261,7 @@ class Game:
             pass
         current = snapshot["current_item"]
         response = {"turn_id": request.turn_id, "state_json": dump(snapshot), "memory_context": content,
-                    "memory_status": status, "memory_refs": refs,
+                    "memory_status": status, "memory_refs": refs, "coins": coins,
                     "active_item_id": current["id"] if current else "", "active_version": current["version"] if current else 0}
         with self.store.connect(write=True) as conn:
             conn.execute("UPDATE prepares SET response=COALESCE(response,?) WHERE turn_id=?", (dump(response), request.turn_id))
@@ -289,6 +294,7 @@ class Game:
         proposal = request.proposal
         canonical = dump(proposal.model_dump())
         event_id = None
+        coin_delta = 0
         with self.store.connect(write=True) as conn:
             prepared = conn.execute("SELECT * FROM prepares WHERE turn_id=? AND owner=?", (request.turn_id, request.user_id)).fetchone()
             if not prepared or not prepared["response"]:
@@ -358,9 +364,19 @@ class Game:
                     correction = conn.execute("SELECT id,payload FROM events WHERE item_id=? AND action='correct' ORDER BY version DESC LIMIT 1", (item["id"],)).fetchone()
                     memory = memory_text(event_id, action, item, payload, correction)
                     conn.execute("INSERT INTO outbox(event_id,owner,status,content,memory_text) VALUES (?,?,'pending',?,?)", (event_id, request.user_id, dump(payload), memory))
+                coin_delta = COIN_REWARDS.get(action, 0)
+                if coin_delta:
+                    conn.execute("INSERT OR IGNORE INTO coin_events(id,owner,event_id,action,amount,created_at) "
+                                 "VALUES (?,?,?,?,?,?)",
+                                 (event_id, request.user_id, event_id, action, coin_delta,
+                                  datetime.now(timezone.utc).isoformat()))
+                    conn.execute("UPDATE owners SET coins=COALESCE(coins,0)+? WHERE user_id=?",
+                                 (coin_delta, request.user_id))
             memory_status = "pending" if mutation and action != "appraise" else "not_required"
+            coins = conn.execute("SELECT COALESCE(coins,0) FROM owners WHERE user_id=?",
+                                 (request.user_id,)).fetchone()[0]
             items = shelf(conn, request.user_id) if action == "shelf" else None
-            response = self.receipt(proposal, item, memory_status, [], items)
+            response = self.receipt(proposal, item, memory_status, [], items, coins, coin_delta)
             conn.execute("INSERT INTO receipts(turn_id,proposal,response) VALUES (?,?,?)", (request.turn_id, canonical, dump(response)))
         if memory_status == "pending":
             try:
@@ -370,13 +386,17 @@ class Game:
             with self.store.connect(write=True) as conn:
                 row = conn.execute("SELECT status,memory_refs FROM outbox WHERE event_id=?", (event_id,)).fetchone()
                 status = self.public_sync_status(row["status"])
-                response = self.receipt(proposal, item, status, json.loads(row["memory_refs"]), items)
+                response = self.receipt(proposal, item, status, json.loads(row["memory_refs"]), items, coins, coin_delta)
                 conn.execute("UPDATE receipts SET response=? WHERE turn_id=?", (dump(response), request.turn_id))
         return response
 
     @staticmethod
-    def receipt(proposal, item, status, refs, items):
-        return {"ok": True, "action": proposal.action, "reply": proposal.reply, "display": render(proposal, item, status, refs, items), "item_id": item["id"] if item else "", "version": item["version"] if item else 0, "memory_status": status, "memory_refs": refs, "replayed": False}
+    def receipt(proposal, item, status, refs, items, coins=0, coin_delta=0):
+        return {"ok": True, "action": proposal.action, "reply": proposal.reply,
+                "display": render(proposal, item, status, refs, items, coins, coin_delta),
+                "item_id": item["id"] if item else "", "version": item["version"] if item else 0,
+                "memory_status": status, "memory_refs": refs, "coins": coins,
+                "coin_delta": coin_delta, "replayed": False}
 
     @staticmethod
     def public_sync_status(status):
@@ -425,12 +445,19 @@ class Game:
                 raise HTTPException(422, "cursor 无效")
         with self.store.connect() as conn:
             items, next_cursor = shelf_page(conn, owner, limit, cursor)
-        return {"items": items, "next_cursor": next_cursor}
+            row = conn.execute("SELECT COALESCE(coins,0) FROM owners WHERE user_id=?", (owner,)).fetchone()
+        return {"items": items, "next_cursor": next_cursor, "coins": row[0] if row else 0}
+
+    def coins(self, owner):
+        with self.store.connect() as conn:
+            row = conn.execute("SELECT COALESCE(coins,0) FROM owners WHERE user_id=?", (owner,)).fetchone()
+        return row[0] if row else 0
 
     def export(self, owner):
         with self.store.connect() as conn:
             items = shelf(conn, owner)
         return {"user_id": owner, "exported_at": datetime.now(timezone.utc).isoformat(),
+                "coins": self.coins(owner),
                 "items": [self.detail(owner, item["id"]) for item in items]}
 
     def detail(self, owner, item_id):

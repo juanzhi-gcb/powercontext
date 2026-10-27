@@ -54,7 +54,17 @@ def _v2_claim_rate_lineage(conn):
         key TEXT PRIMARY KEY, window_start INTEGER NOT NULL, count INTEGER NOT NULL)""")
 
 
+def _v3_coins(conn):
+    owner_columns = {row[1] for row in conn.execute("PRAGMA table_info(owners)")}
+    if "coins" not in owner_columns:
+        conn.execute("ALTER TABLE owners ADD COLUMN coins INTEGER NOT NULL DEFAULT 0")
+    conn.execute("""CREATE TABLE IF NOT EXISTS coin_events(
+        id TEXT PRIMARY KEY, owner TEXT NOT NULL, event_id TEXT NOT NULL,
+        action TEXT NOT NULL, amount INTEGER NOT NULL, created_at TEXT NOT NULL)""")
+
+
 MIGRATIONS = (
     (1, "base", _v1_base),
     (2, "claim-rate-lineage", _v2_claim_rate_lineage),
+    (3, "coins", _v3_coins),
 )

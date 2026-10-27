@@ -7,6 +7,7 @@ const state = {
   items: [],
   activeItemId: null,
   activeTicket: '',
+  coins: 0,
   busy: false,
   opening: '',
 };
@@ -113,8 +114,35 @@ function typeInto(el, text, speed = 22) {
   });
 }
 
+function setMood(mood) {
+  const figure = document.querySelector('.laoyu');
+  if (figure) figure.dataset.mood = mood;
+}
+
+function stampAction() {
+  const figure = document.querySelector('.laoyu');
+  if (!figure) return;
+  figure.classList.remove('stamping');
+  void figure.offsetWidth;
+  figure.classList.add('stamping');
+  setTimeout(() => figure.classList.remove('stamping'), 700);
+}
+
+function setCoins(value) {
+  state.coins = Number(value) || 0;
+  $('coins').textContent = state.coins;
+}
+
+function showCoinFloat(delta) {
+  const element = $('coinFloat');
+  element.textContent = `+${delta} 勇气币`;
+  element.classList.remove('show');
+  void element.offsetWidth;
+  element.classList.add('show');
+}
+
 function parseDisplay(markdown) {
-  const result = { reply: '', action: '', ticket: '', status: '', name: '', fields: {}, memory: '', options: [], raw: markdown };
+  const result = { reply: '', action: '', ticket: '', status: '', name: '', fields: {}, memory: '', options: [], coinDelta: 0, coins: null, raw: markdown };
   const lines = String(markdown || '').split(/\r?\n/);
   let mode = '';
   for (const raw of lines) {
@@ -140,6 +168,8 @@ function parseDisplay(markdown) {
     const field = line.match(/^- (外观|特性|寓意|铭文|小任务)：(.*)$/);
     if (field) { result.fields[field[1]] = unescapeMarkdown(field[2]); continue; }
     if (/^(老余已记下|交易已保存|长期记忆)/.test(line.trim())) { result.memory = line.trim(); continue; }
+    const coin = line.match(/^勇气币 \+(\d+) · 现有 (\d+)$/);
+    if (coin) { result.coinDelta = Number(coin[1]); result.coins = Number(coin[2]); continue; }
     if (line.startsWith('可以输入：')) {
       result.options = line.replace('可以输入：', '').replace(/。$/, '')
         .split('；').map((item) => item.trim()).filter(Boolean);
@@ -203,6 +233,8 @@ function renderChips(options) {
 
 async function renderAnswer(markdown) {
   const parsed = parseDisplay(markdown);
+  setMood('warm');
+  if (parsed.action === '已确认典当') stampAction();
   const receipt = $('receipt');
   receipt.classList.remove('fresh');
   void receipt.offsetWidth;
@@ -215,6 +247,8 @@ async function renderAnswer(markdown) {
   if (parsed.status) meta.push(parsed.status);
   if (parsed.memory) meta.push(parsed.memory);
   $('speechMeta').textContent = meta.join(' · ');
+  if (parsed.coins !== null) setCoins(parsed.coins);
+  if (parsed.coinDelta) showCoinFloat(parsed.coinDelta);
   $('footStamp').textContent = parsed.action || '柜台小叙';
   renderCard(parsed);
   renderChips(parsed.options);
@@ -229,6 +263,7 @@ async function ensureSession() {
   state.ticket = data.ticket;
   updateTicketUI();
   renderUserLine('');
+  setMood('calm');
   if (data.new) {
     await typeInto($('speech'), state.opening || '进来坐。我是老余。', 16);
     $('speechMeta').textContent = '新客登记 · 当票 ' + state.ticket;
@@ -295,6 +330,7 @@ async function send(text) {
   flySlip(query, input);
   input.value = '';
   autosize(input);
+  setMood('think');
   setBusy(true);
   $('shop').classList.add('thinking');
   $('footStamp').textContent = '正在翻账本';
@@ -314,6 +350,7 @@ async function send(text) {
     $('speech').classList.remove('typing');
     $('speech').textContent = error.message || '柜台那边没有回应。';
     $('footStamp').textContent = '未盖章';
+    setMood('stern');
     toast(error.message || '柜台那边没有回应');
   } finally {
     $('shop').classList.remove('thinking');
@@ -324,6 +361,7 @@ async function send(text) {
 async function refreshShelf() {
   const data = await api('/api/shelf');
   state.items = (data && data.items) || [];
+  if (data && typeof data.coins === 'number') setCoins(data.coins);
   state.activeItemId = (state.activeTicket
     && state.items.find((item) => item.id.startsWith(state.activeTicket))?.id)
     || state.items[0]?.id || null;
@@ -441,6 +479,7 @@ async function claimTicket(event) {
     state.activeItemId = null;
     $('itemCard').hidden = true;
     renderUserLine('');
+    setMood('warm');
     updateTicketUI();
     $('ticketModal').classList.remove('open');
     $('ticketModal').setAttribute('aria-hidden', 'true');
@@ -527,10 +566,20 @@ function bind() {
     localStorage.removeItem(convKey());
     $('itemCard').hidden = true;
     renderUserLine('');
+    setMood('calm');
     typeInto($('speech'), '好，重新开一段。柜台还是这张柜台，旧事都还在架上。', 18);
     $('speechMeta').textContent = '新会话';
     toast('已重开一段对话；旧记忆仍会按当票召回');
   });
+  for (const item of document.querySelectorAll('.case-item')) {
+    item.addEventListener('click', () => toast(item.dataset.note || '这瓶只是陈列。'));
+  }
+  for (const tag of document.querySelectorAll('.shelf .tag')) {
+    tag.addEventListener('click', () => toast(tag.dataset.note || '这只是一张旧价签。'));
+  }
+  const cat = document.querySelector('.cat');
+  if (cat) cat.addEventListener('click', () => toast('猫翻了个身，继续睡。'));
+
   for (const button of document.querySelectorAll('[data-close]')) {
     button.addEventListener('click', () => {
       const target = $(button.dataset.close);

@@ -38,7 +38,7 @@
 
 | 检查 | 结果 |
 |---|---|
-| `pytest tests -q`（后端 + DSL + 控制台登录） | 96 passed |
+| `pytest tests -q`（后端 + DSL + 控制台登录） | 97 passed |
 | `scripts/verify_services.py`（真实后端 + 真实 PowerContext） | passed，见 `docs/evidence/services.json` |
 | `scripts/verify_e2e.py`（真实 Dify + 真实模型，跨会话） | passed，见 `docs/evidence/e2e.json` |
 | `npm run verify:ui`（无头 Edge，BFF + 真实模型 + 跨浏览器当票） | passed，截图在 `docs/evidence/ui-*.png` |
