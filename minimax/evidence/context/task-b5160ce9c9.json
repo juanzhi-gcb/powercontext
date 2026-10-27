@@ -1,0 +1,581 @@
+{
+  "schema": "sdd-context/v1",
+  "task_id": "task-b5160ce9c9",
+  "task": "为 ordermesh 的订单查询增加金额下限筛选（`list_orders` 的 `min_total` 参数）：结果必须包含金额等于下限的订单（闭区间），支持十进制字符串金额；负数与无法解析的金额必须抛出 `ValueError`，并且结果仍然按创建时间降序排列。",
+  "project_id": "ordermesh",
+  "generated_at": "2026-10-26T08:27:18+00:00",
+  "ingest_run": "15a13dcd2b87498e",
+  "selection": {
+    "method": "tf-idf over seekdb inverted index + spec/test/code link graph",
+    "query_terms": [
+      "ordermesh",
+      "list_orders",
+      "list",
+      "orders",
+      "min_total",
+      "min",
+      "total",
+      "valueerror",
+      "value",
+      "error",
+      "为",
+      "的订",
+      "订单",
+      "单查",
+      "查询",
+      "询增",
+      "增加",
+      "加金",
+      "金额",
+      "额下",
+      "下限",
+      "限筛",
+      "筛选",
+      "的",
+      "参数",
+      "果必",
+      "须包",
+      "包含",
+      "含金",
+      "额等",
+      "等于",
+      "于下",
+      "限的",
+      "闭区间",
+      "闭区",
+      "区间",
+      "支持",
+      "持十",
+      "十进",
+      "进制"
+    ],
+    "candidate_documents": 43
+  },
+  "spec_items": [
+    {
+      "id": "SPEC-ORD-003#R1",
+      "spec_id": "SPEC-ORD-003",
+      "title": "订单金额下限筛选 R1 闭区间语义",
+      "requirement": "当 `min_total` 非空时，只返回 `order.total >= min_total` 的订单。\n**等于下限的订单必须包含在结果中**，即语义为闭区间。\n`min_total` 必须是 `Decimal`、整数或十进制字符串；字符串按十进制解析（例如 `\"150.00\"`）。\n该条件与 `status` 条件同时传入时按逻辑与组合。",
+      "matched_terms": [
+        "min_total",
+        "ordermesh",
+        "total",
+        "min",
+        "下限",
+        "于下",
+        "制字",
+        "包含",
+        "区间",
+        "十进",
+        "字符",
+        "的订"
+      ],
+      "score": 8.444423,
+      "source": {
+        "path": "specs/SPEC-ORD-003-min-total.md",
+        "start_line": 20,
+        "end_line": 24,
+        "revision": 1,
+        "checksum": "f7ca77df283f1a393cb7eb7ba9f72bc6f423fb7a538efa6fa836ff6ac193c76a",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-003#R3",
+      "spec_id": "SPEC-ORD-003",
+      "title": "订单金额下限筛选 R3 入参校验",
+      "requirement": "`min_total` 为负数时必须抛出 `ValueError`，消息中包含参数名 `min_total`。\n`min_total` 为无法解析为十进制数的字符串（如 `\"not-a-number\"`）时同样必须抛出\n`ValueError`，不得把 `decimal.InvalidOperation` 等底层异常直接暴露给调用方。",
+      "matched_terms": [
+        "valueerror",
+        "min_total",
+        "ordermesh",
+        "error",
+        "total",
+        "value",
+        "min",
+        "下限",
+        "包含",
+        "十进",
+        "字符",
+        "抛出"
+      ],
+      "score": 6.925979,
+      "source": {
+        "path": "specs/SPEC-ORD-003-min-total.md",
+        "start_line": 31,
+        "end_line": 34,
+        "revision": 1,
+        "checksum": "ff4890180f5be6c9a5c860238d4a25f38c4fb9ac67569174fb4c45c6612dcc67",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-003#R4",
+      "spec_id": "SPEC-ORD-003",
+      "title": "订单金额下限筛选 R4 排序保持",
+      "requirement": "加上 `min_total` 之后，结果仍按 `created_at` 降序排列（见 SPEC-ORD-001 R1）。",
+      "matched_terms": [
+        "min_total",
+        "ordermesh",
+        "total",
+        "min",
+        "下限",
+        "序排",
+        "排列",
+        "果仍",
+        "筛选",
+        "订单",
+        "负数",
+        "金额"
+      ],
+      "score": 5.849934,
+      "source": {
+        "path": "specs/SPEC-ORD-003-min-total.md",
+        "start_line": 37,
+        "end_line": 38,
+        "revision": 1,
+        "checksum": "1f37c516b0257680a179978018cc6f47858712fa911b086d98c4e2177cfbd38c",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-003#R2",
+      "spec_id": "SPEC-ORD-003",
+      "title": "订单金额下限筛选 R2 缺省行为",
+      "requirement": "`min_total` 未传或显式传入 `None` 时不得过滤任何订单，其结果必须与旧行为完全一致。",
+      "matched_terms": [
+        "min_total",
+        "ordermesh",
+        "total",
+        "min",
+        "下限",
+        "果必",
+        "筛选",
+        "订单",
+        "负数",
+        "金额",
+        "限筛",
+        "额下"
+      ],
+      "score": 5.26981,
+      "source": {
+        "path": "specs/SPEC-ORD-003-min-total.md",
+        "start_line": 27,
+        "end_line": 28,
+        "revision": 1,
+        "checksum": "2f36872130f64dbb163ea1e9c0746f457120d16cf863bbd6ed3819e949724f47",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-001#R2",
+      "spec_id": "SPEC-ORD-001",
+      "title": "订单列表查询 R2 状态筛选",
+      "requirement": "`status` 参数可选；传入时只保留 `OrderStatus` 匹配的订单。\n`status` 既接受 `OrderStatus` 枚举，也接受其字符串值（如 `\"paid\"`）。\n未知状态必须抛出 `ValueError`，消息包含 `unknown status`。",
+      "matched_terms": [
+        "list_orders",
+        "valueerror",
+        "ordermesh",
+        "orders",
+        "error",
+        "value",
+        "list",
+        "包含",
+        "字符",
+        "抛出",
+        "查询",
+        "的订"
+      ],
+      "score": 3.384145,
+      "source": {
+        "path": "specs/SPEC-ORD-001-order-listing.md",
+        "start_line": 25,
+        "end_line": 28,
+        "revision": 1,
+        "checksum": "64c8e8cf4c6a0bba6917bcadebc191e1ee4b3b02f9e98cb134477e79ccf74c96",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-004#R1",
+      "spec_id": "SPEC-ORD-004",
+      "title": "查询参数校验约定 R1 用户输入错误使用 ValueError",
+      "requirement": "调用方传入不可接受的参数值（负数、无法解析的金额、未知枚举值）时，服务层必须抛出\n`ValueError`，不得泄漏 `TypeError`、`decimal.InvalidOperation` 等底层实现异常。",
+      "matched_terms": [
+        "valueerror",
+        "ordermesh",
+        "error",
+        "value",
+        "抛出",
+        "无法",
+        "析的",
+        "查询",
+        "法解",
+        "的金",
+        "解析",
+        "负数"
+      ],
+      "score": 3.292214,
+      "source": {
+        "path": "specs/SPEC-ORD-004-input-validation.md",
+        "start_line": 19,
+        "end_line": 21,
+        "revision": 1,
+        "checksum": "be0a0cb6328c63c9c0a2f6372136d12ae8f09cccfe09156a6f4c82fa47da7a0a",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-001#R1",
+      "spec_id": "SPEC-ORD-001",
+      "title": "订单列表查询 R1 返回范围与排序",
+      "requirement": "`list_orders(customer_id)` 只返回该客户自己的订单，并按 `created_at` 降序排列（最新的订单在前）。\n未知客户必须返回空列表，而不是抛出异常。",
+      "matched_terms": [
+        "list_orders",
+        "ordermesh",
+        "orders",
+        "list",
+        "序排",
+        "抛出",
+        "排列",
+        "查询",
+        "的订",
+        "筛选",
+        "订单",
+        "降序"
+      ],
+      "score": 3.242502,
+      "source": {
+        "path": "specs/SPEC-ORD-001-order-listing.md",
+        "start_line": 20,
+        "end_line": 22,
+        "revision": 1,
+        "checksum": "eb8ea565d846efee212cf961aaccf1ca11ace73d9f9d60aa566cd22a93245aa7",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "id": "SPEC-ORD-001#R3",
+      "spec_id": "SPEC-ORD-001",
+      "title": "订单列表查询 R3 金额精度",
+      "requirement": "订单金额 `Order.total` 全程使用 `Decimal`，禁止退化为浮点数比较。",
+      "matched_terms": [
+        "list_orders",
+        "ordermesh",
+        "orders",
+        "total",
+        "list",
+        "查询",
+        "筛选",
+        "订单",
+        "金额"
+      ],
+      "score": 2.937972,
+      "source": {
+        "path": "specs/SPEC-ORD-001-order-listing.md",
+        "start_line": 31,
+        "end_line": 32,
+        "revision": 1,
+        "checksum": "eb9cfea18648afaa4baab53632ce02694e3eac658abdbc39ccfa9c92fa0cc87e",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    }
+  ],
+  "code": [
+    {
+      "doc_id": "code:demo_project/ordermesh/service.py::OrderService.list_orders",
+      "symbol": "OrderService.list_orders",
+      "path": "demo_project/ordermesh/service.py",
+      "reason": [
+        "linked to SPEC-ORD-001#R1",
+        "symbol named in the task",
+        "exercised by 6 tests"
+      ],
+      "source": {
+        "path": "demo_project/ordermesh/service.py",
+        "start_line": 17,
+        "end_line": 50,
+        "revision": 1,
+        "checksum": "60404ce394b702508328d90d9d05fb38efd119ee30575672d3d67eeea09fc375",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "doc_id": "code:demo_project/ordermesh/models.py::OrderStatus",
+      "symbol": "OrderStatus",
+      "path": "demo_project/ordermesh/models.py",
+      "reason": [
+        "linked to SPEC-ORD-001#R2",
+        "exercised by 1 tests"
+      ],
+      "source": {
+        "path": "demo_project/ordermesh/models.py",
+        "start_line": 11,
+        "end_line": 17,
+        "revision": 1,
+        "checksum": "e4ff34be784505dad254308ee237ebb9d57443ed1d1f0e92b4a824470385bdb5",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    },
+    {
+      "doc_id": "code:demo_project/ordermesh/models.py::Order",
+      "symbol": "Order",
+      "path": "demo_project/ordermesh/models.py",
+      "reason": [
+        "linked to SPEC-ORD-001#R3"
+      ],
+      "source": {
+        "path": "demo_project/ordermesh/models.py",
+        "start_line": 20,
+        "end_line": 37,
+        "revision": 1,
+        "checksum": "393fbf57dcb60e64f20c4ff5663b75c6b5eb7cc59666c6846964a1df228d9baa",
+        "verified": true,
+        "verification": "content matches file"
+      }
+    }
+  ],
+  "tests": {
+    "target": [
+      {
+        "node_id": "tests/test_min_total_filter.py::test_filtering_keeps_the_newest_first_order",
+        "name": "test_filtering_keeps_the_newest_first_order",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R4"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 49,
+          "end_line": 53,
+          "revision": 1,
+          "checksum": "764b126e8374c86deda78edc18accee31527c1cd2e4e8041bf3f5f3683d88d14",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_min_total_filter.py::test_min_total_accepts_a_decimal_string",
+        "name": "test_min_total_accepts_a_decimal_string",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R1"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 23,
+          "end_line": 27,
+          "revision": 1,
+          "checksum": "19e6dec807c71199a445f94a796518b531b4b868f75b60f446efe222c9faf3c3",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_min_total_filter.py::test_min_total_composes_with_the_status_filter",
+        "name": "test_min_total_composes_with_the_status_filter",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R1"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 42,
+          "end_line": 46,
+          "revision": 1,
+          "checksum": "0bba20ffb4adccb33f86bb9c47453f686f40229598539f11c9df36e797d06a93",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_min_total_filter.py::test_min_total_includes_orders_equal_to_the_boundary",
+        "name": "test_min_total_includes_orders_equal_to_the_boundary",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R1"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 16,
+          "end_line": 20,
+          "revision": 1,
+          "checksum": "94865b8c9c6845d898747aae2bb06035c23abfdbfc82990d5ade2acfe61f6918",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_min_total_filter.py::test_negative_min_total_is_rejected",
+        "name": "test_negative_min_total_is_rejected",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R3"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 30,
+          "end_line": 33,
+          "revision": 1,
+          "checksum": "a4831afbdd8f390696ad0c1263d532bd5d5736fe46ae334f4265efa2bdd59982",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_min_total_filter.py::test_unparseable_min_total_is_rejected",
+        "name": "test_unparseable_min_total_is_rejected",
+        "path": "demo_project/tests/test_min_total_filter.py",
+        "covers": [
+          "SPEC-ORD-003#R3"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_min_total_filter.py",
+          "start_line": 36,
+          "end_line": 39,
+          "revision": 1,
+          "checksum": "6a2985b089284b3a40b383d31f95e106d8f21a88c927ed10f0bdc0fb5a0ecb8d",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      }
+    ],
+    "regression": [
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_omitting_min_total_does_not_filter",
+        "name": "test_omitting_min_total_does_not_filter",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-003#R2"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 49,
+          "end_line": 57,
+          "revision": 1,
+          "checksum": "e3369417223a883b8104cb542023b87523b93c456077467820ecf230e576e910",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_returns_every_order_of_one_customer_newest_first",
+        "name": "test_returns_every_order_of_one_customer_newest_first",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R1"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 12,
+          "end_line": 21,
+          "revision": 1,
+          "checksum": "08dd138931a2011b48c71aa1e35105c53e0d240d81cc72e8568ed95d4d23dee2",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_status_filter_accepts_the_enum_value",
+        "name": "test_status_filter_accepts_the_enum_value",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R2"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 36,
+          "end_line": 40,
+          "revision": 1,
+          "checksum": "8a6c2852336d27414e3e29291aacb0fe98b3007baf08813e5bb104e57f31e73e",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_status_filter_keeps_only_matching_orders",
+        "name": "test_status_filter_keeps_only_matching_orders",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R2"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 29,
+          "end_line": 33,
+          "revision": 1,
+          "checksum": "448c203b5c5e433dd035d00810820478e6b945abddae68c2bd62d95c94fca896",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_totals_are_exact_decimals",
+        "name": "test_totals_are_exact_decimals",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R3"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 60,
+          "end_line": 69,
+          "revision": 1,
+          "checksum": "291e6af9cada5e1b65c00b8f17e094c34e3973eb32940af4d362cfc405591a8f",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_unknown_customer_returns_empty_list",
+        "name": "test_unknown_customer_returns_empty_list",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R1"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 24,
+          "end_line": 26,
+          "revision": 1,
+          "checksum": "c17ecf81acec9c215865eeaf3fc00320a41dc1075c4063ad1d4f0411a1da0758",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      },
+      {
+        "node_id": "tests/test_list_orders_baseline.py::test_unknown_status_raises_value_error",
+        "name": "test_unknown_status_raises_value_error",
+        "path": "demo_project/tests/test_list_orders_baseline.py",
+        "covers": [
+          "SPEC-ORD-001#R2"
+        ],
+        "source": {
+          "path": "demo_project/tests/test_list_orders_baseline.py",
+          "start_line": 43,
+          "end_line": 46,
+          "revision": 1,
+          "checksum": "9cecb3474fee2cd561cbee79e782030e831c43fec817b28d64b92b9b98a87f35",
+          "verified": true,
+          "verification": "content matches file"
+        }
+      }
+    ]
+  },
+  "_excerpts": {
+    "code:demo_project/ordermesh/service.py::OrderService.list_orders": "  17 |     def list_orders(\n  18 |         self,\n  19 |         customer_id: str,\n  20 |         status: OrderStatus | str | None = None,\n  21 |         min_total: Decimal | int | str | None = None,\n  22 |     ) -> list[Order]:\n  23 |         \"\"\"Return one customer's orders, newest first.\n  24 | \n  25 |         ``status`` keeps only orders in that lifecycle state. ``min_total`` is the\n  26 |         optional lower bound for the order total; the exact boundary semantics\n  27 |         are owned by SPEC-ORD-003.\n  28 | \n  29 |         Raises:\n  30 |             ValueError: when ``status`` is not a known order status.\n  31 |         \"\"\"\n  32 | \n  33 |         orders = self._repository.list_for_customer(customer_id)\n  34 | \n  35 |         if status is not None:\n  36 |             if not isinstance(status, OrderStatus):\n  37 |                 try:\n  38 |                     status = OrderStatus(status)\n  39 |                 except ValueError as exc:\n  40 |                     raise ValueError(f\"unknown status: {status!r}\") from exc\n  41 |             orders = [order for order in orders if order.status is status]\n  42 | \n  43 |         if min_total is not None:\n  44 |             # TODO(SPEC-ORD-003): the lower bound is exclusive today and negative\n  45 |             # input is not validated yet.\n  46 |             threshold = min_total if isinstance(min_total, Decimal) else Decimal(min_total)\n  47 |             orders = [order for order in orders if order.total > threshold]\n  48 | \n  49 |         orders.sort(key=lambda order: order.created_at, reverse=True)\n  50 |         return orders",
+    "code:demo_project/ordermesh/models.py::OrderStatus": "  11 | class OrderStatus(str, Enum):\n  12 |     \"\"\"Lifecycle states an order can be in.\"\"\"\n  13 | \n  14 |     PENDING = \"pending\"\n  15 |     PAID = \"paid\"\n  16 |     SHIPPED = \"shipped\"\n  17 |     CANCELLED = \"cancelled\"",
+    "code:demo_project/ordermesh/models.py::Order": "  20 | @dataclass(frozen=True, slots=True)\n  21 | class Order:\n  22 |     \"\"\"A single customer order.\n  23 | \n  24 |     ``total`` is always a :class:`~decimal.Decimal` so that money comparisons in\n  25 |     :meth:`ordermesh.service.OrderService.list_orders` are exact.\n  26 |     \"\"\"\n  27 | \n  28 |     order_id: str\n  29 |     customer_id: str\n  30 |     total: Decimal\n  31 |     status: OrderStatus\n  32 |     created_at: datetime\n  33 | \n  34 |     def is_open(self) -> bool:\n  35 |         \"\"\"Return ``True`` while the order can still change state.\"\"\"\n  36 | \n  37 |         return self.status in (OrderStatus.PENDING, OrderStatus.PAID)"
+  }
+}

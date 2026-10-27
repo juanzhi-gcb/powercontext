@@ -1,0 +1,4 @@
+public/models/
+node_modules/
+dist/
+seekdb-data/

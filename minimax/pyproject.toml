@@ -1,0 +1,26 @@
+[project]
+name = "sdd-context"
+version = "1.0.0"
+description = "Spec-driven development context module for AI coding assistants"
+requires-python = ">=3.11"
+dependencies = [
+    "pymysql>=1.1,<2",
+    "pyyaml>=6,<7",
+    "pylibseekdb>=1.4.0.post1,<2; sys_platform == 'linux'",
+]
+
+[project.optional-dependencies]
+full = [
+    "powercontext[cli,server]>=1.4.0,<2",
+    "pytest>=8,<9",
+]
+
+[project.scripts]
+sddctx = "sdd_context.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sdd_context*"]

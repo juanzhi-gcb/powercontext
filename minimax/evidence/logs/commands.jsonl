@@ -1,0 +1,10 @@
+{"at": "2026-10-26T08:27:14+00:00", "argv": ["sddctx", "init", "--drop"], "command": "init", "exit_code": 0, "duration_s": 1.88, "python": "3.12.14"}
+{"at": "2026-10-26T08:27:16+00:00", "argv": ["sddctx", "ingest"], "command": "ingest", "exit_code": 0, "duration_s": 2.24, "python": "3.12.14"}
+{"at": "2026-10-26T08:27:16+00:00", "argv": ["sddctx", "reset-demo"], "command": "reset-demo", "exit_code": 0, "duration_s": 0.0, "python": "3.12.14"}
+{"at": "2026-10-26T08:27:18+00:00", "argv": ["sddctx", "context", "--task-file", "tasks/TASK-ORD-003.md", "--out", ".runtime/context.json"], "command": "context", "exit_code": 0, "duration_s": 2.18, "python": "3.12.14"}
+{"at": "2026-10-26T08:27:21+00:00", "argv": ["sddctx", "baseline", "--task-id", "task-b5160ce9c9", "--expect", "fail"], "command": "baseline", "exit_code": 0, "duration_s": 1.98, "python": "3.12.14"}
+{"at": "2026-10-26T08:29:01+00:00", "argv": ["sddctx", "patch", "--task-id", "task-b5160ce9c9"], "command": "patch", "exit_code": 0, "duration_s": 100.47, "python": "3.12.14"}
+{"at": "2026-10-26T08:29:02+00:00", "argv": ["sddctx", "verify", "--task-id", "task-b5160ce9c9"], "command": "verify", "exit_code": 0, "duration_s": 0.45, "python": "3.12.14"}
+{"at": "2026-10-26T08:29:02+00:00", "argv": ["sddctx", "snapshot", "--label", "after"], "command": "snapshot", "exit_code": 0, "duration_s": 0.0, "python": "3.12.14"}
+{"at": "2026-10-26T08:29:02+00:00", "argv": ["sddctx", "status", "--task-id", "task-b5160ce9c9"], "command": "status", "exit_code": 0, "duration_s": 0.04, "python": "3.12.14"}
+{"at": "2026-10-26T08:29:08+00:00", "argv": ["sddctx", "status", "--task-id", "task-b5160ce9c9"], "command": "status", "exit_code": 0, "duration_s": 0.06, "python": "3.12.14"}

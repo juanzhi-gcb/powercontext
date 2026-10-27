@@ -1,0 +1,12 @@
+.env
+.env.local
+.venv
+.venv/
+.seekdb/
+.powercontext/
+.runtime/
+.sdd_state/
+__pycache__/
+*.pyc
+.pytest_cache/
+demo_project/.pytest_cache/

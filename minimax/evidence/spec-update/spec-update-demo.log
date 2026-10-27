@@ -1,0 +1,11 @@
+== context before the specification update ==
+revision: 1
+requirement: 该条件与 `status` 条件同时传入时按逻辑与组合。
+== append a new rule to SPEC-ORD-003 R1 ==
+ingested specs=14 code=12 tests=17 links=40 run=63f0c1c08dad4b88
+revisions bumped: spec:SPEC-ORD-003#R1
+== context after re-import ==
+revision: 1 -> 2
+requirement now ends with: 示例变更新增：`min_total` 允许带千分位分隔符（例如 `"1,500.00"`），解析前必须先去掉逗号。
+OK: the context follows the updated specification
+specification restored on exit

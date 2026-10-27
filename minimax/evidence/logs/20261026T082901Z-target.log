@@ -1,0 +1,6 @@
+$ /root/mm-live/.venv/bin/python -m pytest -q --no-header -p no:cacheprovider tests/test_min_total_filter.py::test_filtering_keeps_the_newest_first_order tests/test_min_total_filter.py::test_min_total_accepts_a_decimal_string tests/test_min_total_filter.py::test_min_total_composes_with_the_status_filter tests/test_min_total_filter.py::test_min_total_includes_orders_equal_to_the_boundary tests/test_min_total_filter.py::test_negative_min_total_is_rejected tests/test_min_total_filter.py::test_unparseable_min_total_is_rejected
+# cwd: /root/mm-live/demo_project
+# exit: 0
+
+......                                                                   [100%]
+6 passed in 0.00s

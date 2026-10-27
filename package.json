@@ -1,0 +1,13 @@
+{
+  "name": "oceanbase-2026-stepfun-submission",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Entry point for the StepFun ecosystem task; the application lives in stepfun/",
+  "scripts": {
+    "setup": "npm --prefix stepfun install",
+    "postinstall": "npm --prefix stepfun install",
+    "build": "npm --prefix stepfun run build",
+    "start": "npm --prefix stepfun start",
+    "benchmark": "npm --prefix stepfun run benchmark"
+  }
+}
