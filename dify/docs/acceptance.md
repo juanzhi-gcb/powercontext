@@ -15,7 +15,7 @@
 | 2. 真实后端 + 真实 PowerContext | `uv run --project backend python scripts/verify_services.py` | passed；纠正、确认典当、跨会话召回、回访、货架隔离、跨玩家拒绝、重复提交、取回 | [services.json](evidence/services.json)，标记 `dify_model_executed: false` |
 | 3. 真实 Dify 导入与干净重导入 | `uv run --project backend --group dev python scripts/configure_dify.py --root D:/DifyPawnshop [--new-app]` | completed，16 节点；`model_executed: false` | [dify-import.json](evidence/dify-import.json)、[dify-reimport.json](evidence/dify-reimport.json) |
 | 3. 真实 Dify 应用发布 | Dify 控制台发布 + 模型 provider 绑定 | published | [dify-publish.json](evidence/dify-publish.json) |
-| 4. 真实 Dify + 真实模型端到端 | `uv run --project backend python scripts/verify_e2e.py --root D:/DifyPawnshop` | passed；鉴定、纠正、确认典当、新会话召回、回访转化、玩家隔离 6 步 | [e2e.json](evidence/e2e.json)，标记 `model_executed: true` |
+| 4. 真实 Dify + 真实模型端到端 | `uv run --project backend python scripts/verify_e2e.py --root D:/DifyPawnshop` | 连续两次均 passed；鉴定、纠正、确认典当、新会话召回、回访转化、玩家隔离 6 步 | [e2e.json](evidence/e2e.json)、[e2e-repeat.json](evidence/e2e-repeat.json)，标记 `model_executed: true` |
 
 `verify_services.py` 只覆盖第 2 类：它直接调用真实后端与 PowerContext HTTP，使用脚本构造的虚构请求，不启动 Dify、不调用模型。第 4 类由 `verify_e2e.py` 覆盖：它通过 Dify 服务 API 驱动已发布应用，再用控制台 API 读回同一 `workflow_run_id` 的节点执行记录，因此证据里保存的是 prepare 节点实际交给模型的 `memory_status` 与 `memory_context`，而不只是模型的回答文本。
 

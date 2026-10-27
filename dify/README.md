@@ -12,7 +12,7 @@
 
 ## 快速开始
 
-部署细节、模型配置、DSL 导入、网络和排错见[运行手册](docs/runbook.md)。验收步骤和证据边界见[验收说明](docs/acceptance.md)；许可与来源见[归属说明](docs/attribution.md)。
+一次真实运行的完整摘录见[体验记录](docs/demo.md)。部署细节、模型配置、DSL 导入、网络和排错见[运行手册](docs/runbook.md)；验收步骤和证据边界见[验收说明](docs/acceptance.md)；许可与来源见[归属说明](docs/attribution.md)。
 
 在 Windows PowerShell 中进入仓库的 `dify/` 目录，确认 Docker Desktop 正在运行，并安装 Python 3.12、`uv`、Git 和 Docker Desktop（其 Linux 容器由 Docker Desktop 的 WSL2 后端运行）：
 

@@ -55,10 +55,10 @@ uv run --no-project --python 3.12 python scripts/manage.py down --root D:/DifyPa
    uv run --project backend python scripts/build_dsl.py --help
    ```
 
-   构建器默认 provider 为 `langgenius/openai_api_compatible/openai_api_compatible`，默认模型名为 `pawnshop-model`，服务 URL 为 `http://pawnshop:8080`。按实际 provider 和 Dify 中模型名重新生成 DSL，例如：
+   构建器默认 provider 为 `langgenius/openai_api_compatible/openai_api_compatible`，默认模型名为 `pawnshop-model`，服务 URL 为 `http://pawnshop:8080`。仓库内已提交的 DSL 是按本机验收所用模型名构建的；**如果你配置的模型名不同，先用你的名称重新生成再导入**：
 
    ```powershell
-   uv run --project backend python scripts/build_dsl.py --provider langgenius/openai_api_compatible/openai_api_compatible --model pawnshop-model --service-url http://pawnshop:8080 --output dsl/pawnshop-chatflow.yml
+   uv run --project backend python scripts/build_dsl.py --provider langgenius/openai_api_compatible/openai_api_compatible --model <你的模型名> --service-url http://pawnshop:8080 --output dsl/pawnshop-chatflow.yml
    ```
 
    该文件可用作导入源；其中模型引用必须与 Dify 中已配置的 provider 和模型名相符。导入或创建 Chatflow 后，在模型节点选择已配置模型，并将其发布。
