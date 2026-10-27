@@ -1,0 +1,47 @@
+{
+  "notice": "全部为原创虚构游戏验收数据，不含真实用户信息，不预置生产数据库，不构成模型运行记录。请求应通过 prepare/act 接口提交。",
+  "user_id": "fictional-demo-use-a-fresh-suffix",
+  "turns": [
+    {
+      "query": "我总担心走得比别人慢。",
+      "action": "appraise",
+      "card": {
+        "name": "迟到半拍的月亮怀表",
+        "appearance": "银色表盘上有一枚缓慢转动的月牙",
+        "trait": "听见催促声时会暂停一秒",
+        "meaning": "虚构故事：给自己的节奏留一张座位",
+        "inscription": "月亮从不领取全勤奖",
+        "quest": "今天给一次小小停顿起个名字"
+      }
+    },
+    {
+      "query": "不是想更快，我是不想一直被催。",
+      "action": "correct",
+      "card": {
+        "name": "允许停顿的月亮怀表",
+        "appearance": "银色表盘旁多了一把微型椅子",
+        "trait": "主人说稍等时会放出一盏小灯",
+        "meaning": "用户纠正的草稿：不想一直被催；物件设定仍是虚构",
+        "inscription": "这一秒由我保管",
+        "quest": "为自己选一个可以暂缓回复的时刻"
+      }
+    },
+    {"query": "确认典当", "action": "pawn"},
+    {"query": "老板，我回来看看上次的怀表。", "action": "chat", "conversation_id": "second-session"},
+    {
+      "query": "今天我关掉了催促提醒，安静散步了十分钟。",
+      "action": "revisit",
+      "reported_event": "今天我关掉了催促提醒，安静散步了十分钟。",
+      "card": {
+        "name": "装得下十分钟的月亮怀表",
+        "appearance": "表盖里长出一条供小人散步的银色小路",
+        "trait": "每走一步，指针便轻轻发光",
+        "meaning": "虚构变化：把用户报告的散步经历变成一段小路",
+        "inscription": "今天有一段路属于自己",
+        "quest": "下次想停一停时，想起这条路"
+      }
+    },
+    {"query": "查看货架", "action": "shelf"},
+    {"query": "取回这枚怀表", "action": "retrieve"}
+  ]
+}

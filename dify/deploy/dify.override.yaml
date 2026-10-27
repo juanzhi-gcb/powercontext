@@ -1,0 +1,22 @@
+# Merge after the unmodified official Dify 1.17.1 docker-compose.yaml.
+services:
+  nginx:
+    ports: !override
+      - 127.0.0.1:18080:80
+      - 127.0.0.1:18443:443
+  plugin_daemon:
+    ports: !override
+      - 127.0.0.1:15003:5003
+  api:
+    networks:
+      - shared
+  worker:
+    networks:
+      - shared
+  ssrf_proxy:
+    networks:
+      - shared
+networks:
+  shared:
+    external: true
+    name: pawnshop-shared

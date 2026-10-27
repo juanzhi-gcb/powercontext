@@ -1,0 +1,21 @@
+{
+  "kind": "direct_model_smoke_not_dify",
+  "status_code": 200,
+  "model": "deepseek-v4.1-flash-1017",
+  "content": "连接成功",
+  "usage": {
+    "prompt_tokens": 37,
+    "total_tokens": 59,
+    "completion_tokens": 22,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "image_tokens": 0,
+      "text_tokens": 37
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 18,
+      "text_tokens": 3
+    }
+  },
+  "error_type": null
+}

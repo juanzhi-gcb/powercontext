@@ -1,0 +1,12 @@
+{
+  "kind": "real_dify_import",
+  "created_at": "2026-10-26T16:36:29.930848+00:00",
+  "dify_version": "1.17.1",
+  "dsl_version": "0.7.0",
+  "app_id": "908c97f4-e1c6-4cab-90ef-121d9600c9da",
+  "import_status": "completed",
+  "node_count": 16,
+  "clean_new_app": false,
+  "model_executed": false,
+  "credentials_included": false
+}

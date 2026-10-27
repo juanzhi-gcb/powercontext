@@ -1,0 +1,18 @@
+{
+  "competition_base": "d647275c308e09b7b623f322a26f5c4e85734fb0",
+  "competition_branch": "2026-competition-ecosystem",
+  "dify_version": "1.17.1",
+  "dify_commit": "8387590ace4a094de812b7847fc6a4c3a27cd52b",
+  "powercontext_commit": "31ecdd61beadb7ac8de5da20998dead9a9e07845",
+  "powercontext_build_version": "1.4.0",
+  "python": "3.12",
+  "database_roles": {
+    "dify": "official default PostgreSQL",
+    "game": "SQLite authoritative item and receipt ledger",
+    "powercontext": "persistent memories and prepared context, default SQLite"
+  },
+  "model": "Configured locally; must be recorded in real-model evidence",
+  "embedding": "not required",
+  "rerank": "not required",
+  "custom_dify_plugin": "none"
+}
