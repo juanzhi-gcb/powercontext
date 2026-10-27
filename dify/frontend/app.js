@@ -203,6 +203,10 @@ function renderChips(options) {
 
 async function renderAnswer(markdown) {
   const parsed = parseDisplay(markdown);
+  const receipt = $('receipt');
+  receipt.classList.remove('fresh');
+  void receipt.offsetWidth;
+  receipt.classList.add('fresh');
   const speech = $('speech');
   const text = parsed.reply || markdown || '老余没有说话，只是把账本翻了一页。';
   await typeInto(speech, text, 18);
@@ -224,6 +228,7 @@ async function ensureSession() {
   state.player = data.player;
   state.ticket = data.ticket;
   updateTicketUI();
+  renderUserLine('');
   if (data.new) {
     await typeInto($('speech'), state.opening || '进来坐。我是老余。', 16);
     $('speechMeta').textContent = '新客登记 · 当票 ' + state.ticket;
@@ -234,15 +239,64 @@ async function ensureSession() {
   }
 }
 
+function renderUserLine(text) {
+  const line = $('userLine');
+  if (!text) {
+    line.hidden = true;
+    line.textContent = '';
+    return;
+  }
+  line.hidden = false;
+  line.textContent = '你：' + text;
+}
+
+function flySlip(text, origin) {
+  if (!origin || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const rect = origin.getBoundingClientRect();
+  const slip = document.createElement('div');
+  slip.className = 'flying-slip';
+  slip.textContent = text.length > 46 ? text.slice(0, 46) + '…' : text;
+  slip.style.left = rect.left + rect.width / 2 + 'px';
+  slip.style.top = rect.top + rect.height / 2 + 'px';
+  document.body.append(slip);
+  requestAnimationFrame(() => {
+    const dx = window.innerWidth * 0.5 - (rect.left + rect.width / 2);
+    const dy = window.innerHeight * 0.44 - (rect.top + rect.height / 2);
+    slip.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(7deg) scale(.45)`;
+    slip.classList.add('go');
+  });
+  setTimeout(() => slip.remove(), 820);
+}
+
+function startParallax() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let frame = null;
+  const set = (x, y) => {
+    document.body.style.setProperty('--px', x.toFixed(3));
+    document.body.style.setProperty('--py', y.toFixed(3));
+  };
+  document.addEventListener('pointermove', (event) => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      set((event.clientX / window.innerWidth - 0.5) * 2, (event.clientY / window.innerHeight - 0.5) * 2);
+      frame = null;
+    });
+  }, { passive: true });
+  document.addEventListener('pointerleave', () => set(0, 0));
+}
+
 async function send(text) {
   if (state.busy) return;
   const input = $('query');
   const query = (text !== undefined ? text : input.value).trim();
   if (!query) { input.focus(); return; }
   if (!state.player) await ensureSession();
+  renderUserLine(query);
+  flySlip(query, input);
   input.value = '';
   autosize(input);
   setBusy(true);
+  $('shop').classList.add('thinking');
   $('footStamp').textContent = '正在翻账本';
   $('speech').classList.add('typing');
   $('speech').textContent = '沙沙……老余把你要说的话抄到一张新纸上。';
@@ -262,6 +316,7 @@ async function send(text) {
     $('footStamp').textContent = '未盖章';
     toast(error.message || '柜台那边没有回应');
   } finally {
+    $('shop').classList.remove('thinking');
     setBusy(false);
   }
 }
@@ -385,6 +440,7 @@ async function claimTicket(event) {
     state.activeTicket = '';
     state.activeItemId = null;
     $('itemCard').hidden = true;
+    renderUserLine('');
     updateTicketUI();
     $('ticketModal').classList.remove('open');
     $('ticketModal').setAttribute('aria-hidden', 'true');
@@ -459,6 +515,10 @@ function bind() {
   $('lookupBtn').addEventListener('click', () => {
     if (state.activeItemId) openProvenance(state.activeItemId);
   });
+  $('itemCard').addEventListener('click', (event) => {
+    if (event.target.closest('button')) return;
+    if (state.activeItemId) openProvenance(state.activeItemId);
+  });
   $('ticketBtn').addEventListener('click', openTicket);
   $('copyTicket').addEventListener('click', copyTicket);
   $('claimForm').addEventListener('submit', claimTicket);
@@ -466,6 +526,7 @@ function bind() {
     state.conversation = '';
     localStorage.removeItem(convKey());
     $('itemCard').hidden = true;
+    renderUserLine('');
     typeInto($('speech'), '好，重新开一段。柜台还是这张柜台，旧事都还在架上。', 18);
     $('speechMeta').textContent = '新会话';
     toast('已重开一段对话；旧记忆仍会按当票召回');
@@ -496,6 +557,7 @@ function bind() {
 async function init() {
   bind();
   startRain();
+  startParallax();
   try {
     const config = await api('/api/config');
     state.opening = config.opening;

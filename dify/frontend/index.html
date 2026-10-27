@@ -13,12 +13,23 @@
 <canvas id="rain" aria-hidden="true"></canvas>
 
 <div class="street" aria-hidden="true">
+  <div class="street-glow"></div>
   <div class="neon neon-left">24H</div>
-  <div class="neon neon-right">烦恼<br>典当行</div>
+  <div class="neon neon-right">烦恼<br><b>典当行</b></div>
   <div class="street-lamp"></div>
+  <div class="umbrella"><i></i><span></span></div>
+  <div class="window-rain"></div>
 </div>
 
 <main id="shop" class="shop">
+  <div class="ceiling" aria-hidden="true">
+    <div class="hanging-note n1">未完成<br>也可以</div>
+    <div class="hanging-note n2">雨会停</div>
+    <div class="hanging-note n3">慢慢来</div>
+    <div class="hanging-lamp"><i></i></div>
+    <div class="wall-clock"><i></i><b></b></div>
+  </div>
+
   <header class="sign" aria-label="烦恼典当行">
     <div class="sign-chain left"></div>
     <div class="sign-chain right"></div>
@@ -32,75 +43,137 @@
   </header>
 
   <section class="shelf shelf-left" aria-hidden="true">
+    <div class="shelf-side"></div>
     <div class="shelf-label">今日收购</div>
-    <div class="tag"><span>别人的高光时刻收音机</span><b>300</b></div>
-    <div class="tag"><span>未说出口的话</span><b>150</b></div>
-    <div class="tag"><span>皱巴巴的计划书</span><b>80</b></div>
-    <div class="tag"><span>焦虑的云朵</span><b>200</b></div>
+    <div class="shelf-row">
+      <div class="prop radio"><i></i><b></b></div>
+      <div class="tag"><span>别人的高光时刻收音机</span><b>300</b></div>
+    </div>
+    <div class="shelf-row">
+      <div class="prop hourglass"><i></i></div>
+      <div class="tag"><span>拖延症沙漏</span><b>120</b></div>
+    </div>
+    <div class="shelf-row">
+      <div class="prop mirror"><i></i></div>
+      <div class="tag"><span>放大缺点的镜子</span><b>180</b></div>
+    </div>
+    <div class="shelf-row">
+      <div class="prop cloudjar"><i></i></div>
+      <div class="tag"><span>焦虑的云朵</span><b>200</b></div>
+    </div>
+    <div class="shelf-row">
+      <div class="prop books"><i></i><i></i><i></i></div>
+      <div class="tag"><span>皱巴巴的计划书</span><b>80</b></div>
+    </div>
+    <div class="shelf-board"></div>
   </section>
 
-  <section class="shelf shelf-right" aria-hidden="true">
-    <div class="shelf-label">记忆收藏</div>
-    <div class="tag"><span>拖延症沙漏</span><b>120</b></div>
-    <div class="tag"><span>放大缺点的镜子</span><b>180</b></div>
-    <div class="tag"><span>怕说错话的回声铃</span><b>150</b></div>
+  <section class="display-case" aria-hidden="true">
+    <div class="case-top">冷藏区<span>暂时冷却的情绪</span></div>
+    <div class="case-glass">
+      <div class="case-row">
+        <i class="bottle b1"></i><i class="bottle b2"></i><i class="bottle b3"></i>
+        <em>失败</em><em>拖延</em><em>自我怀疑</em>
+      </div>
+      <div class="case-row">
+        <i class="bottle b4"></i><i class="bottle b5"></i><i class="bottle b6"></i>
+        <em>社交疲惫</em><em>敏感</em><em>周五的雨</em>
+      </div>
+      <div class="case-row">
+        <i class="bottle b7"></i><i class="bottle b2"></i><i class="bottle b5"></i>
+        <em>待办</em><em>旧梦</em><em>未读消息</em>
+      </div>
+    </div>
+    <div class="case-glow"></div>
+    <div class="case-plant"><i></i><i></i><i></i></div>
   </section>
 
-  <div class="window" aria-hidden="true">
-    <div class="window-rain"></div>
-    <div class="window-sign">深夜<br><b>2:00</b></div>
-    <div class="window-text">雨会停<br>你也是</div>
+  <div class="wall-notes" aria-hidden="true">
+    <div class="note n-a">有些烦恼<br>不必带走<br>在这里<br>先放下也好</div>
+    <div class="note n-b">把情绪<br>也先<br>降一下温</div>
+    <div class="note n-c">今日汇率<br><b>1 勇气币</b><br>= 1 点勇敢</div>
+    <div class="photo"></div>
+    <div class="tv"><i></i></div>
+    <div class="calendar"><b>10</b><span>星期一</span><em>宜：慢一点</em></div>
   </div>
 
-  <div class="lamp-glow" aria-hidden="true"></div>
+  <div class="rate-board" aria-hidden="true">
+    <p>今日汇率</p>
+    <ul>
+      <li>做小决定 <b>10</b></li>
+      <li>准时睡觉 <b>20</b></li>
+      <li>向人说谢谢 <b>30</b></li>
+      <li>为自己做一件小事 <b>100</b></li>
+    </ul>
+    <span>勇气币 · 只在本店流通</span>
+  </div>
+
   <figure class="laoyu">
-    <img src="assets/laoyu.svg" alt="老余，烦恼典当行的掌柜，灰白卷发、圆眼镜、深色围裙，在灯下盖章">
+    <img src="assets/laoyu.svg" alt="老余，烦恼典当行的掌柜，灰白卷发、圆眼镜、深色围裙，在灯下拿着印章">
     <figcaption class="laoyu-name">老余</figcaption>
   </figure>
 
   <div class="counter" aria-hidden="true">
-    <div class="counter-top"></div>
+    <div class="counter-top">
+      <div class="counter-lamp"><i></i></div>
+      <div class="abacus"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="ledger-stack"><i></i><i></i><i></i></div>
+      <div class="coin-tray"><i></i><i></i><i></i></div>
+      <div class="cup"><i></i></div>
+      <div class="jar"><span>未说出口的话</span></div>
+      <div class="cat"><i></i><b></b></div>
+      <div class="stamp-tool"></div>
+    </div>
     <div class="counter-front">
       <div class="counter-carving">典当 · 不是结束 · 是给自己一个喘息的空间</div>
+      <div class="counter-knob"></div>
     </div>
-    <div class="desk-lamp"><span></span></div>
-    <div class="stamp-tool"></div>
-    <div class="jar"><span>未说出口的话</span></div>
   </div>
 
   <div class="panels">
-  <article class="receipt paper" id="receipt" aria-live="polite">
-    <header class="receipt-head">
-      <span>典当受理单</span>
-      <span class="receipt-no" id="receiptNo">NO. 0001</span>
-    </header>
-    <div class="receipt-body">
-      <p class="speech-label">老余：</p>
-      <div class="speech" id="speech">推门进来吧。柜台在，茶还温着。</div>
-      <p class="speech-meta" id="speechMeta"></p>
-    </div>
-    <div class="receipt-foot">
-      <span class="foot-note">本店只收故事，不收利息</span>
-      <span class="foot-stamp" id="footStamp">未盖章</span>
-    </div>
-  </article>
+    <article class="receipt paper" id="receipt" aria-live="polite">
+      <header class="receipt-head">
+        <span>典当受理单</span>
+        <span class="receipt-no" id="receiptNo">NO. 0001</span>
+      </header>
+      <div class="receipt-body">
+        <p class="user-line" id="userLine" hidden></p>
+        <p class="speech-label">老余：</p>
+        <div class="speech" id="speech">推门进来吧。柜台在，茶还温着。</div>
+        <p class="speech-meta" id="speechMeta"></p>
+      </div>
+      <div class="receipt-foot">
+        <span class="foot-note">本店只收故事，不收利息</span>
+        <span class="foot-stamp" id="footStamp">未盖章</span>
+      </div>
+    </article>
 
-  <article class="item-card paper" id="itemCard" hidden>
-    <div class="stamp" id="stamp" aria-hidden="true">已收下</div>
-    <h3 id="itemName">—</h3>
-    <p class="item-ticket" id="itemTicket"></p>
-    <dl id="itemFields"></dl>
-    <div class="item-foot">
-      <span id="itemStatus"></span>
-      <button class="link" id="lookupBtn" type="button">这件的来历</button>
-    </div>
-  </article>
-
+    <article class="item-card paper" id="itemCard" hidden>
+      <div class="stamp" id="stamp" aria-hidden="true">已收下</div>
+      <h3 id="itemName">—</h3>
+      <p class="item-ticket" id="itemTicket"></p>
+      <dl id="itemFields"></dl>
+      <div class="item-foot">
+        <span id="itemStatus"></span>
+        <button class="link" id="lookupBtn" type="button">这件的来历</button>
+      </div>
+    </article>
   </div>
 
   <button class="shelf-handle" id="shelfBtn" type="button">
     <span>货架</span><b id="shelfCount">0</b>
   </button>
+
+  <div class="light-cone" aria-hidden="true"></div>
+
+  <div class="foreground" aria-hidden="true">
+    <div class="fg-tag fg-left">可赎回<br>凭证</div>
+    <div class="fg-tag fg-right">深夜<br>营业中</div>
+  </div>
+
+  <div class="thinking-dots" aria-hidden="true">
+    <i></i><i></i><i></i><span>老余在翻账本</span>
+  </div>
 </main>
 
 <aside class="drawer" id="shelfDrawer" aria-hidden="true" aria-label="我的货架">
