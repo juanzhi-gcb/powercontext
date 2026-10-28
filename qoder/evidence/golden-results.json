@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T02:30:56.920494+00:00",
+  "generated_at": "2026-10-28T03:09:08.120232+00:00",
   "api": "http://127.0.0.1:8081/api",
   "passed": true,
   "cases": [
@@ -9,8 +9,8 @@
       "expected_decision": "NO_GO",
       "actual_decision": "NO_GO",
       "reason_code": "MECHANISM_REPACKAGED",
-      "source_run_id": "dd93dbb8-1921-491e-918d-6b1d2e2256f0",
-      "replay_run_id": "7c663281-7983-4115-94cc-50ac70fcd25b",
+      "source_run_id": "ad929c96-24bc-4a2f-8529-9f4a9af6c7aa",
+      "replay_run_id": "5ed0b841-3542-447d-b3ca-5b752e8d8ff5",
       "evidence_ids": [
         "moon-observation",
         "moon-repaint",
@@ -34,8 +34,8 @@
       "expected_decision": "NO_GO",
       "actual_decision": "NO_GO",
       "reason_code": "MECHANISM_REPACKAGED",
-      "source_run_id": "6dd58471-b238-4604-88d4-3f7a023708e9",
-      "replay_run_id": "16bd38fe-fc79-403c-9196-9a260b241a2e",
+      "source_run_id": "497950f1-ed8e-4194-b737-637f72a6a076",
+      "replay_run_id": "a0bdfc0f-7958-443e-a665-f0ee164db539",
       "evidence_ids": [
         "ibml-broad-decision",
         "ibml-narrow-condition",
@@ -59,8 +59,8 @@
       "expected_decision": "CONDITIONAL_GO",
       "actual_decision": "CONDITIONAL_GO",
       "reason_code": "DIFFERENTIATED_MECHANISM",
-      "source_run_id": "80bd9ae3-437b-45cf-adc7-9e5df975f808",
-      "replay_run_id": "a3a15920-1964-4925-a1be-b77f31f53408",
+      "source_run_id": "7c679dbd-e9c2-4543-a827-8289ca8ffd89",
+      "replay_run_id": "aa97af79-7523-4fd6-a9b2-7240e2ebd3b4",
       "evidence_ids": [
         "ibml-broad-decision",
         "ibml-narrow-condition",
@@ -84,8 +84,8 @@
       "expected_decision": "CONDITIONAL_GO",
       "actual_decision": "CONDITIONAL_GO",
       "reason_code": "DIFFERENTIATED_MECHANISM",
-      "source_run_id": "beb13687-79f1-4e5e-84ca-58afe4736dc7",
-      "replay_run_id": "b8c3f5bc-6f4d-4c9f-b381-a37a65fceb31",
+      "source_run_id": "354bd99f-e52d-4af1-b594-065fd72e6d1a",
+      "replay_run_id": "029bdc8d-5b71-4b69-840e-1c6e85dca150",
       "evidence_ids": [
         "codealign-mechanism-2026-01-15",
         "moon-observation",
@@ -107,8 +107,8 @@
       "expected_decision": "NO_GO",
       "actual_decision": "NO_GO",
       "reason_code": "DETERMINISTIC_GATE_FAILED",
-      "source_run_id": "a6919c83-fb2a-477e-851a-471bb0a03b78",
-      "replay_run_id": "f05fb1cc-c4dd-4d10-b722-617800615936",
+      "source_run_id": "2ef49b75-e228-4839-9ffd-0a4e3b1250b0",
+      "replay_run_id": "16c3aba8-bc98-452b-93d1-f7a5713f5f3e",
       "evidence_ids": [
         "codealign-mechanism-2026-01-15",
         "codealign-engineering-2026-03-15"
