@@ -25,4 +25,4 @@ Transformers.js 4.3.1 / ONNX Runtime Web 1.31.0-dev：显式 WebGPU + FP16，初
 
 稳定“文件名+chunk序号”ID配合upsert保证重导幂等，导入结束一次刷新后可检索；集合名随请求传递，切换清理结果并重读计数。FP16实测：首次本地HTTP ONNX传输264ms；加载2231ms（含预热465ms）；60段向量化113ms、写入965ms、刷新302ms；首次查询141ms，后续28ms。加载只采样一次，首次公网下载未测；所有原始样本、传输观测和限制见 `BENCHMARK_REPORT.md` / `bench/results/matrix.json`。
 
-Linux安装系统库后，在仓库根目录 `npm ci` → `npm run setup` → `npm run models` → `npm start`，访问localhost:8787。`npm run bench:e2e` 本轮13/13（含幂等、增量向量/混合检索、集合隔离、无WebGPU降级）；`npm run bench:matrix` 复现主表。平台私有仓库认证填写见 `SUBMISSION.md`。
+Linux安装系统库后，在仓库根目录 `npm ci` → `npm run setup` → `npm run models` → `npm start`，访问localhost:8787。`npm run bench:e2e` 本轮13/13（含幂等、增量向量/混合检索、集合隔离、无WebGPU降级）；`npm run bench:matrix` 复现主表。平台仓库与分支填写见 `SUBMISSION.md`。

@@ -78,4 +78,4 @@ npm start
 
 另开终端执行 `npm test`、`npm run typecheck`、`npm run bench:e2e`、`npm run bench:matrix`。`CHROME_PATH`指定Chrome/Edge，`KB_URL`指定应用，`BENCH_REPEATS`默认5；四配置顺序固定。任一后端不匹配或配置失败时矩阵返回非零退出码。
 
-`TECH_NOTE.md`为一页摘要源文件，`npm --prefix stepfun run note:pdf`生成HTML与A4 PDF。私有仓库及认证克隆URL填写见SUBMISSION。此处本地检查不代表赛事平台已成功完成测评。
+`TECH_NOTE.md`为一页摘要源文件，`npm --prefix stepfun run note:pdf`生成HTML与A4 PDF。提交仓库与分支填写见SUBMISSION。此处本地检查不代表赛事平台已成功完成测评。

@@ -30,5 +30,5 @@
     }
   ],
   "repairTarget": "refs/heads/2026-competition-ecosystem",
-  "note": "Append the repair commit only in the private replica. Public source refs remain unchanged."
+  "note": "Historical copy baseline: source and replica refs matched at verifiedAt before submission repairs. This is not a statement about subsequent branch heads."
 }

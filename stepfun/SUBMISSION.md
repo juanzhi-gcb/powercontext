@@ -4,21 +4,19 @@
 
 ## 仓库和平台字段
 
-按[官方 GitHub 使用说明](https://oceanbase.yuque.com/org-wiki-obtech-vh7w9r/hc3pio/qs1povt8zbza6hts)，使用导入的**私有仓库**进行测试，并在平台参赛信息中填写有读取权限的认证克隆地址。
-
-私有提交仓库已复制原公开仓库全部5个分支、1个标签及其提交历史，复制时逐一核对引用与SHA一致，记录见 [repository-copy.json](bench/results/repository-copy.json)。修复提交只追加到私有副本的生态分支，原公开仓库保持不变。
+本提交使用公开仓库 `juanzhi-gcb/powercontext`，代码可匿名克隆；平台填写仓库根地址及下面的分支和提交号。
 
 | 字段 | 值或格式 |
 |---|---|
-| 私有提交仓库 | `https://github.com/juanzhi-gcb/powercontext-competition-private` |
-| 平台认证克隆地址 | `https://<GitHub用户名>:<PAT>@github.com/juanzhi-gcb/powercontext-competition-private.git` |
+| 提交仓库 | `https://github.com/juanzhi-gcb/powercontext` |
+| 平台克隆地址 | `https://github.com/juanzhi-gcb/powercontext.git` |
 | Branch | `2026-competition-ecosystem` |
-| Commit | 本次推送后的完整 40 位提交号，须存在于上述私有仓库分支历史中 |
+| Commit | 本次推送后的完整 40 位提交号，须存在于上述仓库分支历史中 |
 | 项目目录 | `stepfun` |
 | 安装与启动 | 仓库根目录执行 `npm ci`、`npm start`；或在 `stepfun/` 执行相同命令 |
 | 应用地址 | 默认 `http://127.0.0.1:8787`，可用 `PORT` 覆盖 |
 
-PAT 仅通过平台凭据输入位置填写，不保存在源码、截图、日志或本文件。不要填写官方 PR 地址、GitHub 的 `/tree/...` 页面地址或 `stepfun/` 子目录链接。Branch 不加 `fork/`，也不填本地开发分支别名。
+公开仓库的克隆地址无需附带PAT。不要填写官方PR地址、GitHub的 `/tree/...` 页面地址或 `stepfun/` 子目录链接。Branch不加 `fork/`，也不填本地开发分支别名。[官方指南](https://oceanbase.yuque.com/org-wiki-obtech-vh7w9r/hc3pio/qs1povt8zbza6hts)对私有仓库及认证另有要求；公开访问成功不代表平台已确认提交合规或完成验收。
 
 ## 材料入口
 

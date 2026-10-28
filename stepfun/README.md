@@ -142,4 +142,4 @@ npm run bench:e2e      # 13 项浏览器验收：导入、刷新、幂等、增�
 
 `npm run models` 读取 [model.json](model.json)，从固定 revision 下载发布者的 FP32、FP16、INT8 ONNX，并逐一验证字节数与 SHA-256。不在服务端执行模型。`HF_BASE` 仅用于提供相同文件的镜像；哈希不符会退出。`npm run note:pdf` 可用本机 Chrome/Edge 将一页 Markdown 重新渲染成 HTML/PDF。
 
-提交平台的私有仓库与认证 URL 格式见 [SUBMISSION.md](SUBMISSION.md)。仓库根目录也提供 `models`、`test`、`typecheck`、`bench:matrix`、`bench:e2e` 转发命令。
+提交平台的仓库、分支与字段格式见 [SUBMISSION.md](SUBMISSION.md)。仓库根目录也提供 `models`、`test`、`typecheck`、`bench:matrix`、`bench:e2e` 转发命令。
