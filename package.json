@@ -4,10 +4,15 @@
   "private": true,
   "description": "Entry point for the StepFun ecosystem task; the application lives in stepfun/",
   "scripts": {
-    "setup": "npm --prefix stepfun install",
+    "setup": "npm --prefix stepfun run setup",
     "postinstall": "npm --prefix stepfun install",
     "build": "npm --prefix stepfun run build",
     "start": "npm --prefix stepfun start",
-    "benchmark": "npm --prefix stepfun run benchmark"
+    "benchmark": "npm --prefix stepfun run benchmark",
+    "test": "npm --prefix stepfun test",
+    "typecheck": "npm --prefix stepfun run typecheck",
+    "models": "npm --prefix stepfun run models",
+    "bench:matrix": "npm --prefix stepfun run bench:matrix",
+    "bench:e2e": "npm --prefix stepfun run bench:e2e"
   }
 }

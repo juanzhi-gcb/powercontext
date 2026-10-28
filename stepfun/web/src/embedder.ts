@@ -1,11 +1,13 @@
 import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
+import model from "../../model.json";
 
 export type Backend = "webgpu" | "wasm";
 export type Dtype = "q8" | "fp32" | "fp16";
 /** "auto" picks fp16 on WebGPU and int8 on WASM; both were measured on this corpus. */
 export type RequestedDtype = Dtype | "auto";
 
-export const MODEL_ID = "Xenova/all-MiniLM-L6-v2";
+export const MODEL_ID = model.id;
+export const MODEL_REVISION = model.revision;
 
 // Everything runs from the browser cache when the page is a secure context (https or
 // localhost). Plain-HTTP origins do not expose the Cache API, so the model is simply
@@ -50,7 +52,7 @@ export class Embedder {
     if (wasmOptions) wasmOptions.numThreads = this.crossOriginIsolated ? this.threads : 1;
 
     const attach = async (backend: Backend, dtype: Dtype): Promise<FeatureExtractionPipeline> => {
-      const created = await pipeline("feature-extraction", MODEL_ID, { device: backend, dtype });
+      const created = await pipeline("feature-extraction", MODEL_ID, { device: backend, dtype, revision: MODEL_REVISION });
       this.pipe = created;
       this.backend = backend;
       this.dtype = dtype;

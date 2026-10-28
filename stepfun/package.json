@@ -10,11 +10,15 @@
     "dev": "concurrently -k -n web,server \"npm:dev:web\" \"npm:dev:server\"",
     "build": "vite build",
     "start": "npm run build && sh scripts/with-seekdb-lib.sh server/index.mjs",
-    "benchmark": "node bench/bench.mjs",
+    "benchmark": "npm run bench:matrix",
+    "test": "node --test bench/query-timing.test.mjs",
     "bench:matrix": "node bench/matrix.mjs",
+    "bench:e2e": "node bench/e2e.mjs",
+    "bench:embedding": "node bench/bench.mjs",
     "bench:sweep": "node bench/sweep.mjs",
     "typecheck": "tsc --noEmit",
     "models": "sh scripts/fetch-models.sh",
+    "note:pdf": "node scripts/render-tech-note.mjs",
     "setup": "sh scripts/ensure-bindings.sh"
   },
   "dependencies": {

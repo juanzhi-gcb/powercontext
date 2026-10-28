@@ -17,6 +17,8 @@ npm start       # 构建前端并启动服务，打开 http://127.0.0.1:8787
 
 首次运行需联网下载两样资源：seekdb 原生运行时（约 54 MB，由 `npm run setup` 完成）与模型权重（FP32/FP16/INT8 三份共约 159 MB，可跳过，浏览器会直接从 Hugging Face 按需加载其中一份）。细节与镜像变量见 [`stepfun/README.md`](stepfun/README.md)。
 
-实测数据与优化记录见 [`stepfun/TECH_NOTE.md`](stepfun/TECH_NOTE.md)：`npm run bench:matrix` 复现四配置对照，`npm run bench:e2e` 跑浏览器端 8 项验收。
+提交字段与私有仓库认证格式见 [`stepfun/SUBMISSION.md`](stepfun/SUBMISSION.md)。一页说明为 [`stepfun/TECH_NOTE.pdf`](stepfun/TECH_NOTE.pdf)，完整实验记录见 [`stepfun/BENCHMARK_REPORT.md`](stepfun/BENCHMARK_REPORT.md)。
+
+根目录执行 `npm run models` 下载固定版本并验证权重，`npm run bench:matrix` 复现五次四配置对照，`npm run bench:e2e` 跑浏览器端 13 项验收，`npm test` 验证端到端计时边界。端到端指标覆盖浏览器向量化、seekdb 请求及实际结果渲染。
 
 其余目录（`dify/`、`gaode/`、`minimax/`、`qoder/`）属于同一赛道的其它题目，与本题无关。

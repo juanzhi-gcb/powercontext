@@ -6,6 +6,7 @@ import { FulltextIndexConfig, Schema, SeekdbAdminClient, SeekdbClient } from "se
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
+const model = JSON.parse(fs.readFileSync(path.join(root, "model.json"), "utf8"));
 
 const PORT = Number(process.env.PORT ?? 8787);
 const DIMENSION = Number(process.env.EMBED_DIMENSION ?? 384);
@@ -23,7 +24,7 @@ const RRF_WINDOW = Number(process.env.SEEPDB_RRF_WINDOW ?? 0);
 const RRF_CONSTANT = Number(process.env.SEEPDB_RRF_CONSTANT ?? 1);
 const CORPUS_DIR = path.join(root, "data", "corpus");
 const MODELS_DIR = path.join(root, "public", "models");
-const COLLECTION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
+const COLLECTION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_]{0,63}$/;
 
 // The browser owns the model, so the server never embeds anything. The collection still
 // requires an embedding-function handle for its schema, and this one refuses to run.
@@ -169,6 +170,8 @@ app.get("/api/health", route(async (request, response) => {
     analyzer: FULLTEXT_ANALYZER,
     dimension: DIMENSION,
     collections: [...new Set([DEFAULT_COLLECTION, ...collections.keys()])],
+    runtime: { node: process.version, platform: process.platform, architecture: process.arch },
+    retrieval: { rrfConstant: RRF_CONSTANT, rrfWindow: RRF_WINDOW, candidateFactor: CANDIDATE_FACTOR },
     active: name,
     total,
     crossOriginIsolated: localModels,
@@ -205,7 +208,7 @@ app.get("/api/model-info", route(async (_request, response) => {
         .sort()
         .map((name) => ({ name, bytes: fs.statSync(path.join(onnxDir, name)).size }))
     : [];
-  response.json({ local: files.length > 0, files });
+  response.json({ id: model.id, revision: model.revision, local: files.length > 0, files });
 }));
 
 app.post("/api/import", route(async (request, response) => {

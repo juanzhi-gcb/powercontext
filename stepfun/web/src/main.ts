@@ -1,5 +1,6 @@
-import { Embedder, MODEL_ID, type Backend, type RequestedDtype } from "./embedder";
+import { Embedder, MODEL_ID, MODEL_REVISION, type Backend, type RequestedDtype } from "./embedder";
 import { corpus, importDocuments, refreshIndex, reset, search, stats, type ImportDocument, type SearchHit } from "./api";
+import { measureQuery } from "./query-timing";
 
 const CHUNK_WORDS = 180;
 const CHUNK_OVERLAP = 30;
@@ -127,6 +128,25 @@ function renderHits(hits: SearchHit[]) {
 }
 
 const embedder = new Embedder();
+
+/** The UI and matrix use the same inference, seekdb request and result renderer. */
+async function runQuery(
+  query: string,
+  model: Embedder = embedder,
+  collection: string = activeCollection(),
+  mode: "hybrid" | "vector" | "fulltext" = "hybrid",
+  k = 5,
+) {
+  return measureQuery(
+    mode === "fulltext" ? null : async () => (await model.embed([query], 1))[0],
+    (vector) => search(query, vector, k, collection, mode),
+    async (response) => {
+      renderHits(response.hits);
+      // Allow the updated results to pass a paint opportunity before stopping the timer.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    },
+  );
+}
 
 async function refreshStats() {
   try {
@@ -265,21 +285,11 @@ elements.searchButton.addEventListener("click", async () => {
   if (query === "") return;
   const mode = elements.mode.value as "hybrid" | "vector" | "fulltext";
   elements.searchButton.disabled = true;
-  const endToEndStart = performance.now();
   try {
-    let vector: number[] | null = null;
-    if (mode !== "fulltext") {
-      const embedStart = performance.now();
-      [vector] = await embedder.embed([query], 1);
-      recordMetric("查询向量化", `${(performance.now() - embedStart).toFixed(0)} ms`);
-    } else {
-      recordMetric("查询向量化", "—（全文模式不向量化）");
-    }
-
-    const response = await search(query, vector, 5, activeCollection(), mode);
+    const { response, queryEmbedMs, endToEndMs } = await runQuery(query, embedder, activeCollection(), mode);
+    recordMetric("查询向量化", mode === "fulltext" ? "—（全文模式不向量化）" : `${queryEmbedMs.toFixed(0)} ms`);
     recordMetric("seekdb 检索（服务端计时）", `${response.ms.toFixed(0)} ms（${mode}）`);
-    renderHits(response.hits);
-    recordMetric("端到端（提交查询 → 结果渲染）", `${(performance.now() - endToEndStart).toFixed(0)} ms`);
+    recordMetric("端到端（提交查询 → 结果渲染）", `${endToEndMs.toFixed(0)} ms`);
     elements.searchStatus.textContent =
       `返回 ${response.hits.length} 条结果（${mode}，后端 ${embedder.backend.toUpperCase()}）`;
   } catch (error) {
@@ -333,4 +343,4 @@ if (params.get("bench") === "1") {
 
 // Exposed for the reproducible benchmark harness: it drives both precisions through the
 // same code path the page uses, so the comparison does not need a second implementation.
-(window as unknown as Record<string, unknown>).__kb = { Embedder, MODEL_ID };
+(window as unknown as Record<string, unknown>).__kb = { Embedder, MODEL_ID, MODEL_REVISION, runQuery };

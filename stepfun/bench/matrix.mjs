@@ -10,11 +10,12 @@
  *   npm start                     # in another terminal
  *   npm run bench:matrix          # writes bench/results/matrix.json
  *
- * Env: KB_URL, CHROME_PATH, BENCH_REPEATS (default 3), BENCH_COLLECTION.
+ * Env: KB_URL, CHROME_PATH, BENCH_REPEATS (default 5), BENCH_COLLECTION.
  */
 import puppeteer from "puppeteer-core";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { CORPUS_FILES, QUERIES, gradeFor } from "./queries.mjs";
 
@@ -22,7 +23,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const corpusDir = path.resolve(here, "..", "data", "corpus");
 const resultsDir = path.join(here, "results");
 const KB_URL = process.env.KB_URL ?? "http://127.0.0.1:8787";
-const REPEATS = Number(process.env.BENCH_REPEATS ?? 3);
+const REPEATS = Number(process.env.BENCH_REPEATS ?? 5);
+if (!Number.isInteger(REPEATS) || REPEATS < 1) throw new Error("BENCH_REPEATS must be a positive integer");
+const modelManifest = JSON.parse(fs.readFileSync(path.resolve(here, "..", "model.json"), "utf8"));
 const K = 5;
 const COLLECTION = process.env.BENCH_COLLECTION ?? "bench";
 const BROWSER = process.env.CHROME_PATH ?? defaultBrowser();
@@ -111,9 +114,19 @@ async function runConfig(config, modelInfo) {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForFunction(() => Boolean(window.__kb), { timeout: 60_000 });
 
+    const browserVersion = await browser.version();
+    const browserEnvironment = await page.evaluate(async () => {
+      let gpu = null;
+      try {
+        const adapter = await navigator.gpu?.requestAdapter();
+        const info = adapter?.info;
+        if (info) gpu = { vendor: info.vendor, architecture: info.architecture, device: info.device, description: info.description };
+      } catch { /* WASM-only environments have no adapter. */ }
+      return { userAgent: navigator.userAgent, logicalCpus: navigator.hardwareConcurrency, gpu };
+    });
     const result = await page.evaluate(
       async ({ docs, corpusNames, queries, dtype, forceBackend, repeatCount, collection, k }) => {
-        const { Embedder } = window.__kb;
+        const { Embedder, runQuery } = window.__kb;
         const post = async (path, body) => {
           const response = await fetch(path, {
             method: "POST",
@@ -125,7 +138,12 @@ async function runConfig(config, modelInfo) {
         };
 
         const embedder = new Embedder();
+        performance.clearResourceTimings();
         const backend = await embedder.load(dtype, { forceBackend });
+        if (backend !== forceBackend) throw new Error(`requested ${forceBackend}, actually used ${backend}`);
+        const modelRequests = performance.getEntriesByType("resource")
+          .filter((entry) => /\/models\/|huggingface\.co\//.test(entry.name))
+          .map((entry) => ({ url: entry.name, durationMs: entry.duration, transferBytes: entry.transferSize, bodyBytes: entry.encodedBodySize }));
 
         // Throughput: the whole corpus, repeated, median of the runs.
         const embedRuns = [];
@@ -138,58 +156,53 @@ async function runConfig(config, modelInfo) {
 
         // Fresh collection per configuration, so vectors from one precision never mix with
         // another and the write timing is not dominated by existing rows.
-        await post("/api/reset", { collection });
-        let writeMs = 0;
-        for (let start = 0; start < docs.length; start += 64) {
-          const batch = docs.slice(start, start + 64);
-          const response = await post("/api/import", {
-            collection,
-            refresh: false,
-            documents: batch.map((text, offset) => ({
-              id: `doc-${start + offset}`,
-              text,
-              embedding: vectors[start + offset],
-              metadata: { source: corpusNames[start + offset] },
-            })),
-          });
-          writeMs += response.ms;
+        const writeRuns = [];
+        const refreshRuns = [];
+        let total = 0;
+        for (let run = 0; run < repeatCount; run += 1) {
+          await post("/api/reset", { collection });
+          let writtenMs = 0;
+          for (let start = 0; start < docs.length; start += 64) {
+            const batch = docs.slice(start, start + 64);
+            const response = await post("/api/import", {
+              collection,
+              refresh: false,
+              documents: batch.map((text, offset) => ({
+                id: `doc-${start + offset}`,
+                text,
+                embedding: vectors[start + offset],
+                metadata: { source: corpusNames[start + offset] },
+              })),
+            });
+            writtenMs += response.ms;
+          }
+          const refreshed = await post("/api/refresh", { collection });
+          if (refreshed.total !== docs.length) throw new Error(`expected ${docs.length} rows, got ${refreshed.total}`);
+          writeRuns.push(writtenMs);
+          refreshRuns.push(refreshed.ms);
+          total = refreshed.total;
         }
-        const refreshed = await post("/api/refresh", { collection });
 
-        const embedQuery = async (text) => {
-          const started = performance.now();
-          const [vector] = await embedder.embed([text], 1);
-          return { vector, ms: performance.now() - started };
-        };
-
-        const first = await embedQuery(queries[0].text);
-        const firstStart = performance.now();
-        await post("/api/search", { collection, query: queries[0].text, embedding: first.vector, k, mode: "hybrid" });
-        const firstQueryMs = performance.now() - firstStart;
+        const first = await runQuery(queries[0].text, embedder, collection, "hybrid", k);
 
         const queryEmbedMs = [];
         const searchMs = [];
         const endToEndMs = [];
-        let ranks = [];
+        const ranksByRun = [];
+        const queryRuns = [];
         for (let run = 0; run < repeatCount; run += 1) {
           const ranked = [];
           for (const query of queries) {
-            const embedded = await embedQuery(query.text);
-            const started = performance.now();
-            const response = await post("/api/search", {
-              collection,
-              query: query.text,
-              embedding: embedded.vector,
-              k,
-              mode: "hybrid",
-            });
-            const elapsed = performance.now() - started;
-            queryEmbedMs.push(embedded.ms);
+            const measured = await runQuery(query.text, embedder, collection, "hybrid", k);
+            const { response } = measured;
+            queryEmbedMs.push(measured.queryEmbedMs);
             searchMs.push(response.ms);
-            endToEndMs.push(elapsed);
-            ranked.push(response.hits.map((hit) => hit.metadata?.source ?? hit.id));
+            endToEndMs.push(measured.endToEndMs);
+            const files = response.hits.map((hit) => hit.metadata?.source ?? hit.id);
+            ranked.push(files);
+            queryRuns.push({ run, query: query.text, queryEmbedMs: measured.queryEmbedMs, searchMs: response.ms, endToEndMs: measured.endToEndMs, files });
           }
-          ranks = ranked; // every pass must return the same order; the last one is scored
+          ranksByRun.push(ranked);
         }
 
         return {
@@ -199,16 +212,17 @@ async function runConfig(config, modelInfo) {
           warmupMs: embedder.warmupMs,
           threads: embedder.threads,
           crossOriginIsolated: embedder.crossOriginIsolated,
-          embedMedianMs: null,
+          modelRequests,
           embedRuns,
-          writeMs,
-          refreshMs: refreshed.ms,
-          total: refreshed.total,
-          firstQueryMs,
+          writeRuns,
+          refreshRuns,
+          total,
+          firstQuery: { queryEmbedMs: first.queryEmbedMs, searchMs: first.response.ms, endToEndMs: first.endToEndMs },
           queryEmbedMs,
           searchMs,
           endToEndMs,
-          ranks,
+          queryRuns,
+          ranksByRun,
         };
       },
       {
@@ -223,13 +237,15 @@ async function runConfig(config, modelInfo) {
       },
     );
 
-    const quality = metrics(result.ranks);
+    const qualityRuns = result.ranksByRun.map(metrics);
+    const quality = Object.fromEntries(Object.keys(qualityRuns[0]).map((name) => [name, median(qualityRuns.map((run) => run[name]))]));
     return {
       ...config,
       actualBackend: result.backend,
       described: result.described,
       threads: result.threads,
       crossOriginIsolated: result.crossOriginIsolated,
+      environment: { browserVersion, ...browserEnvironment },
       modelBytes: modelInfo[config.dtype] ?? null,
       loadMs: Math.round(result.loadMs),
       warmupMs: Math.round(result.warmupMs),
@@ -237,15 +253,17 @@ async function runConfig(config, modelInfo) {
       embedRuns: result.embedRuns.map((ms) => Math.round(ms)),
       docsPerSecond: docs.length / (median(result.embedRuns) / 1000),
       msPerDoc: median(result.embedRuns) / docs.length,
-      writeMs: Math.round(result.writeMs),
-      refreshMs: Math.round(result.refreshMs),
+      writeMs: Math.round(median(result.writeRuns)),
+      refreshMs: Math.round(median(result.refreshRuns)),
       total: result.total,
-      firstQueryMs: Math.round(result.firstQueryMs),
+      firstQueryMs: Math.round(result.firstQuery.endToEndMs),
       queryEmbedMs: Math.round(median(result.queryEmbedMs)),
       searchMs: Math.round(median(result.searchMs)),
       endToEndMs: Math.round(median(result.endToEndMs)),
       quality,
-      ranks: result.ranks.map((files, index) => files.indexOf(QUERIES[index].relevant[0])),
+      raw: result,
+      qualityRuns,
+      ranks: result.ranksByRun.at(-1).map((files, index) => files.indexOf(QUERIES[index].relevant[0])),
     };
   } finally {
     await browser.close();
@@ -259,6 +277,8 @@ async function fetchModelInfo() {
     if (!body.local) return { fp32: null, q8: null, note: "weights not vendored (npm run models)" };
     const byName = Object.fromEntries(body.files.map((file) => [file.name, file.bytes]));
     return {
+      id: body.id,
+      revision: body.revision,
       fp32: byName["model.onnx"] ?? null,
       q8: byName["model_quantized.onnx"] ?? null,
       fp16: byName["model_fp16.onnx"] ?? null,
@@ -270,6 +290,10 @@ async function fetchModelInfo() {
 }
 
 const modelInfo = await fetchModelInfo();
+if (modelInfo.id !== modelManifest.id || modelInfo.revision !== modelManifest.revision) {
+  throw new Error("server model revision does not match model.json; restart the submitted application");
+}
+const database = await (await fetch(`${KB_URL}/api/health`)).json();
 const rows = [];
 for (const config of CONFIGS) {
   process.stderr.write(`running ${config.label} …\n`);
@@ -282,11 +306,25 @@ for (const config of CONFIGS) {
 
 fs.mkdirSync(resultsDir, { recursive: true });
 const output = {
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   url: KB_URL,
   repeats: REPEATS,
   corpusChunks: docs.length,
   queries: QUERIES.length,
+  timing: {
+    endToEnd: "query submission before embedding through seekdb HTTP request, application DOM renderer and two animation frames",
+    modelLoad: "one fresh browser profile per configuration; application-local model transfer, runtime initialization and warmup combined; WAN cold download not measured",
+    repeated: "embedding/write/refresh: five runs by default; queries: all labelled queries on every run; medians over all samples",
+    download: "raw.modelRequests contains resource durations and observed HTTP bytes; parallel durations must not be summed into wall-clock download time",
+  },
+  environment: {
+    host: { os: os.type(), release: os.release(), architecture: os.arch(), cpu: os.cpus()[0]?.model, logicalCpus: os.cpus().length, memoryBytes: os.totalmem(), node: process.version },
+    database,
+    batchSize: 16,
+    writeBatchSize: 64,
+    k: K,
+  },
   model: modelInfo,
   rows,
 };
@@ -309,3 +347,4 @@ for (const row of rows) {
 console.log(`\nbackend actually used: ${rows.map((row) => `${row.key}=${row.actualBackend ?? "n/a"}`).join(", ")}`);
 console.log(`model sizes: ${modelInfo.note}`);
 console.log(`raw: ${path.relative(process.cwd(), path.join(resultsDir, "matrix.json"))}`);
+if (rows.some((row) => row.error)) process.exitCode = 1;

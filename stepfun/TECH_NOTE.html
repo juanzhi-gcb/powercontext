@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>seekdb × 阶跃星辰 技术说明</title>
+<style>
+@page { size:A4; margin:13mm; }
+body { font:9.5pt/1.48 "Microsoft YaHei","Noto Sans CJK SC",sans-serif; color:#17212c; margin:0; }
+h1 { font-size:17pt; margin:0 0 8px; color:#073d4c; }
+h2 { font-size:11pt; margin:10px 0 4px; color:#073d4c; border-bottom:1px solid #cedce0; padding-bottom:3px; }
+p { margin:4px 0; }
+code { font:8pt/1.4 Consolas,monospace; overflow-wrap:anywhere; }
+table { border-collapse:collapse; width:100%; font-size:8.1pt; margin:7px 0; }
+th,td { padding:5px 4px; border-bottom:1px solid #d6e0e5; text-align:left; vertical-align:top; }
+th { background:#eaf2f4; } tr { break-inside:avoid; }
+a { color:inherit; text-decoration:none; }
+</style><body><h1>seekdb × 阶跃星辰：端侧知识库技术说明</h1>
+<h2>模型与量化</h2>
+<p>模型为 Apache-2.0 的 <code>Xenova/all-MiniLM-L6-v2</code>，revision <code>751bff37182d3f1213fa05d7196b954e230abad9</code>，384维、mean池化、L2归一化。直接采用发布者的 FP32、FP16、INT8 ONNX，<code>npm run models</code> 下载固定版本并校验 SHA-256（见 <code>model.json</code>），浏览器 <code>dtype</code> 选择文件。FP16/INT8 压缩比分别为 2.00×/3.93×。</p>
+<h2>端侧运行与 seekdb</h2>
+<p>Transformers.js 4.3.1 / ONNX Runtime Web 1.31.0-dev：显式 WebGPU + FP16，初始化失败自动 WASM + INT8，页面徽标与横幅说明后端；本地模型配合 COOP/COEP 提供4线程。文档和查询均在浏览器推理；服务端 embedding 函数直接抛错。seekdb SDK/原生绑定1.4.0，嵌入式集合保存 ID、原文、向量和元数据，cosine、ngram；<code>hybridSearch</code> 在库内进行 RRF（常量1），不在客户端融合。</p>
+<h2>五次实测与质量</h2>
+<p>2026-10-28：Win11、Ryzen 9 8945HX、32GB、RTX 5060 Laptop（驱动582.05）、Edge 156.0.4314.42 headless；服务为 WSL2 Ubuntu 26.04、Node22。固定60段、24个标注查询、k=5；向量化批16，写入批64。</p>
+<table>
+<tr><th>配置</th><th>ONNX体积</th><th>段/秒</th><th>seekdb</th><th>端到端</th><th>MRR / R@1 / R@5 / nDCG@5</th></tr>
+<tr><td>FP32 + WebGPU</td><td>90.39 MB</td><td>616.5</td><td>7 ms</td><td>27 ms</td><td>0.903 / 83.3% / 100% / 0.919</td></tr>
+<tr><td>FP16 + WebGPU</td><td>45.30 MB</td><td>530.8</td><td>7 ms</td><td>28 ms</td><td>0.903 / 83.3% / 100% / 0.919</td></tr>
+<tr><td>INT8 + WebGPU</td><td>22.97 MB</td><td>51.6</td><td>8 ms</td><td>113 ms</td><td>0.951 / 91.7% / 100% / 0.955</td></tr>
+<tr><td>INT8 + WASM/4线程</td><td>22.97 MB</td><td>77.9</td><td>7 ms</td><td>21 ms</td><td>0.951 / 91.7% / 100% / 0.955</td></tr>
+</table>
+<p>中位数：每配置5次语料向量化/写入/刷新；查询为24条×5轮。端到端从向量化前到页面结果渲染及绘制机会，均走应用同一查询函数。FP16质量与基线一致、体积减半，吞吐下降约14%；INT8的名次小幅变化不解读为质量提升。WebGPU下FP16端到端28ms，INT8为113ms。</p>
+<h2>状态、阶段计时与复现</h2>
+<p>稳定“文件名+chunk序号”ID配合upsert保证重导幂等，导入结束一次刷新后可检索；集合名随请求传递，切换清理结果并重读计数。FP16实测：首次本地HTTP ONNX传输264ms；加载2231ms（含预热465ms）；60段向量化113ms、写入965ms、刷新302ms；首次查询141ms，后续28ms。加载只采样一次，首次公网下载未测；所有原始样本、传输观测和限制见 <code>BENCHMARK_REPORT.md</code> / <code>bench/results/matrix.json</code>。</p>
+<p>Linux安装系统库后，在仓库根目录 <code>npm ci</code> → <code>npm run setup</code> → <code>npm run models</code> → <code>npm start</code>，访问localhost:8787。<code>npm run bench:e2e</code> 本轮13/13（含幂等、增量向量/混合检索、集合隔离、无WebGPU降级）；<code>npm run bench:matrix</code> 复现主表。平台私有仓库认证填写见 <code>SUBMISSION.md</code>。</p></body></html>

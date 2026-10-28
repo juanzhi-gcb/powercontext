@@ -1,0 +1,34 @@
+{
+  "verifiedAt": "2026-10-28T00:32:24.568Z",
+  "source": "https://github.com/juanzhi-gcb/powercontext.git",
+  "privateReplica": "https://github.com/juanzhi-gcb/powercontext-competition-private.git",
+  "allHeadsAndTagsMatchedBeforeRepair": true,
+  "refs": [
+    {
+      "ref": "refs/heads/stepfun-probe",
+      "sha": "0d40964ba99831bc9adc0d4bd1669649da8d9d96"
+    },
+    {
+      "ref": "refs/heads/master",
+      "sha": "31ecdd61beadb7ac8de5da20998dead9a9e07845"
+    },
+    {
+      "ref": "refs/tags/minimax-submission-v1",
+      "sha": "36701da2a06adf03958366e19e93a3ebf5e74d40"
+    },
+    {
+      "ref": "refs/heads/2026-competition",
+      "sha": "7065787f39f265f44d683d00c657669230ae4879"
+    },
+    {
+      "ref": "refs/heads/competition",
+      "sha": "7065787f39f265f44d683d00c657669230ae4879"
+    },
+    {
+      "ref": "refs/heads/2026-competition-ecosystem",
+      "sha": "dd2fa242ac61af9f6e7153ee3ea62b546861e221"
+    }
+  ],
+  "repairTarget": "refs/heads/2026-competition-ecosystem",
+  "note": "Append the repair commit only in the private replica. Public source refs remain unchanged."
+}

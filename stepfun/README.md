@@ -2,7 +2,7 @@
 
 一个迷你知识库 Web 应用：文档在**浏览器本地**完成向量化，向量与原文写入 **seekdb**，查询在本地生成向量后交给 seekdb 做**向量 + 全文混合检索**。
 
-- 模型：`Xenova/all-MiniLM-L6-v2`（384 维；WebGPU 用 FP16，WASM 用 INT8——依据见 [TECH_NOTE](TECH_NOTE.md) 5.2）
+- 模型：`Xenova/all-MiniLM-L6-v2`（Apache-2.0，384 维；WebGPU 用 FP16，WASM 用 INT8；固定版本与权重校验值见 [model.json](model.json)）
 - 端侧运行时：Transformers.js（ONNX Runtime Web），优先 WebGPU，不支持时自动降级 WASM 并在页面顶部提示
 - 数据库：seekdb 嵌入式模式（`seekdb` npm SDK + `@seekdb/js-bindings`）
 
@@ -12,7 +12,7 @@
 |---|---|
 | 浏览器 | Chrome / Edge 最新版（WebGPU 可用时自动启用，否则 WASM） |
 | Node.js | 20 LTS 或更高 |
-| 操作系统 | **Linux**（x64 / arm64）或 macOS（arm64）——seekdb 嵌入式原生绑定只发布这些平台 |
+| 操作系统 | 启动包装脚本面向 **Linux**（x64 / arm64）；实测为 WSL2 Ubuntu x64。Windows 浏览器访问 WSL2 服务。其它平台需适配原生库加载，未声称通过验收。 |
 | 系统库 | Linux 需要 `libaio`：Ubuntu 24.04+ 为 `libaio1t64`，并补一个 `libaio.so.1` 兼容链接 |
 | 网络 | 首次运行需能访问 AWS S3（seekdb 运行时，约 54 MB）与 Hugging Face（三份模型权重，约 159 MB；只用某一种精度时可自行裁剪）；受限网络见下文的环境变量覆盖方式 |
 
@@ -97,19 +97,22 @@ stepfun/
 ├── bench/
 │   ├── matrix.mjs            # 四配置对照（体积/吞吐/延迟/质量）
 │   ├── queries.mjs           # 24 条标注查询（评测集）
-│   ├── e2e.mjs               # 浏览器端验收（8 项）
-│   └── results/matrix.json   # 最近一次实测原始数据
+│   ├── e2e.mjs               # 浏览器端验收（13 项）
+│   └── results/matrix.json   # 环境、计时范围与每轮原始样本
 ├── data/corpus/              # 演示语料（60 段）
-└── TECH_NOTE.md              # 技术说明（模型、量化、seekdb、实测）
+├── model.json                # 模型固定 revision、体积、SHA-256
+├── TECH_NOTE.md / .pdf       # 一页技术说明
+├── BENCHMARK_REPORT.md       # 完整实验说明
+└── SUBMISSION.md             # 平台提交字段与私有仓库流程
 ```
 
 ## 数据流
 
 ```
 浏览器                          Node (seekdb 嵌入式)
-文件 → 切分 → MiniLM(INT8) ──┐
+文件 → 切分 → MiniLM(FP16/INT8) ─┐
                              │  POST /api/import  (ids, text, 384维向量, metadata)
-                             └──────────────► collection.add(embeddings=...)
+                             └──────────────► collection.upsert(embeddings=...)
 问题 → MiniLM(FP16/INT8) ────┐
                              │  POST /api/search  (query, queryVector, k, mode)
                              └──────────────► collection.hybridSearch(
@@ -128,9 +131,15 @@ stepfun/
 ```bash
 npm run models         # FP32/FP16/INT8 三份权重到 public/models（约 159 MB）
 npm run bench:matrix   # 四种配置的对照（体积/吞吐/延迟/检索质量）→ bench/results/matrix.json
-npm run bench:e2e      # 浏览器端验收：导入、索引刷新、检索、全文模式、WASM 降级
+npm run bench:e2e      # 13 项浏览器验收：导入、刷新、幂等、增量、隔离、检索、降级
 ```
 
 两个脚本都通过 Puppeteer 驱动本机 Chrome/Edge（`puppeteer-core` 已在 devDependencies 中，`CHROME_PATH` 可覆盖默认的 Edge 路径），并且走应用自身的代码路径：推理用页面里的 `Embedder`，存储与检索用 HTTP API。
 
-`bench:matrix` 输出技术说明 5.1 的主表；`bench:e2e` 输出 8 项通过/失败，可直接作为验收记录。`npm run benchmark` / `bench:sweep` 是早期的单项脚本，保留用于批大小与向量一致性对比。
+`bench:matrix` 默认重复 5 次，输出四配置主表及完整原始计时。端到端走页面同一个 `runQuery`，覆盖查询向量化、seekdb HTTP 请求、DOM 渲染和绘制机会；所有配置都要求实际后端匹配请求，失败时命令返回非零。加载/预热和资源传输观测单列，不把本地 HTTP 权重传输称为首次公网下载。范围详见 [实验说明](BENCHMARK_REPORT.md)。
+
+`bench:e2e` 输出 13 项通过/失败并写入 `bench/results/e2e.json`，每次使用独立测试集合。`npm run benchmark` 也执行 seekdb 矩阵；`bench:embedding` / `bench:sweep` 仅作早期向量一致性与批量探索，不替代正式 seekdb 验收。
+
+`npm run models` 读取 [model.json](model.json)，从固定 revision 下载发布者的 FP32、FP16、INT8 ONNX，并逐一验证字节数与 SHA-256。不在服务端执行模型。`HF_BASE` 仅用于提供相同文件的镜像；哈希不符会退出。`npm run note:pdf` 可用本机 Chrome/Edge 将一页 Markdown 重新渲染成 HTML/PDF。
+
+提交平台的私有仓库与认证 URL 格式见 [SUBMISSION.md](SUBMISSION.md)。仓库根目录也提供 `models`、`test`、`typecheck`、`bench:matrix`、`bench:e2e` 转发命令。

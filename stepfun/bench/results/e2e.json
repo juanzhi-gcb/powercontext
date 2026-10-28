@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-10-28T00:26:28.100Z",
+  "url": "http://127.0.0.1:18880",
+  "collection": "e2e_1793147175406",
+  "checks": [
+    {
+      "name": "模型加载并显示后端",
+      "passed": true,
+      "detail": "后端：WEBGPU · FP16 / 精度：FP16"
+    },
+    {
+      "name": "内置语料导入 + 索引刷新",
+      "passed": true,
+      "detail": "已写入 60 段，索引刷新完成（320 ms），集合共 60 段，可立即检索。"
+    },
+    {
+      "name": "集合状态显示段数",
+      "passed": true,
+      "detail": "集合 e2e_1793147175406 · 60 段 · 384 维 · 分词器 ngram"
+    },
+    {
+      "name": "混合检索返回排序结果",
+      "passed": true,
+      "detail": "13-record-code-0021-md-chunk-0 · 13-record-CODE-0021.md · distance 1.0000"
+    },
+    {
+      "name": "指标面板记录了各阶段耗时",
+      "passed": true,
+      "detail": "模型加载（含预热）=2531 ms（WEBGPU · FP16，预热 425 ms） | 文档向量化=486 ms / 60 段（123.4 段/秒） | 写入 seekdb=886 ms / 60 段 | 索引刷新=320 ms · 集合共 60 段 | 查询向量化=143 ms | seekdb 检索（服务端计时）=37 ms（hybrid） | 端到端（提交查询 → 结果渲染）=196 ms"
+    },
+    {
+      "name": "全文模式无需查询向量即可检索",
+      "passed": true,
+      "detail": "返回 5 条结果（fulltext，后端 WEBGPU）"
+    },
+    {
+      "name": "端到端包含查询向量化、检索及结果渲染",
+      "passed": true,
+      "detail": "embed=16.1ms seekdb=12.0190939999884ms endToEnd=37.8ms"
+    },
+    {
+      "name": "重复导入幂等",
+      "passed": true,
+      "detail": "集合 e2e_1793147175406 · 60 段 · 384 维 · 分词器 ngram; 已写入 60 段，索引刷新完成（306 ms），集合共 60 段，可立即检索。"
+    },
+    {
+      "name": "新增文件写入后可向量检索",
+      "passed": true,
+      "detail": "集合 e2e_1793147175406 · 61 段 · 384 维 · 分词器 ngram"
+    },
+    {
+      "name": "新增文件写入后可混合检索",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "集合切换隔离且恢复原集合状态",
+      "passed": true,
+      "detail": "返回 0 条结果（hybrid，后端 WEBGPU）"
+    },
+    {
+      "name": "无 WebGPU 时降级到 WASM 并给出提示",
+      "passed": true,
+      "detail": "已降级到 WASM：浏览器未暴露 navigator.gpu。核心流程完整可用，向量化速度低于 WebGPU。"
+    },
+    {
+      "name": "WASM 下检索仍可用",
+      "passed": true,
+      "detail": "01-vector-search-md-chunk-0 · 01-vector-search.md · distance 1.0000"
+    }
+  ]
+}

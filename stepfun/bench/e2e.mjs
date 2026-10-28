@@ -13,9 +13,12 @@
 import puppeteer from "puppeteer-core";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const KB_URL = process.env.KB_URL ?? "http://127.0.0.1:8787";
 const BROWSER = process.env.CHROME_PATH ?? defaultBrowser();
+const COLLECTION = `e2e_${Date.now()}`;
+const EMPTY_COLLECTION = `${COLLECTION}_empty`;
 
 function defaultBrowser() {
   const candidates = [
@@ -43,6 +46,7 @@ const browser = await puppeteer.launch({
 
 try {
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument((name) => localStorage.setItem("seekdb-kb.collection", name), COLLECTION);
   await page.goto(KB_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.waitForFunction(() => !document.querySelector("#import").disabled, { timeout: 300_000 });
 
@@ -89,7 +93,59 @@ try {
   const fulltextStatus = await page.$eval("#searchStatus", (element) => element.textContent);
   check("全文模式无需查询向量即可检索", fulltextStatus.includes("fulltext"), fulltextStatus);
 
+  const timed = await page.evaluate(async () => window.__kb.runQuery("Which record references CODE-0021?"));
+  check(
+    "端到端包含查询向量化、检索及结果渲染",
+    timed.queryEmbedMs > 0 && timed.endToEndMs >= timed.queryEmbedMs + timed.response.ms && timed.response.hits.length > 0,
+    `embed=${timed.queryEmbedMs.toFixed(1)}ms seekdb=${timed.response.ms}ms endToEnd=${timed.endToEndMs.toFixed(1)}ms`,
+  );
+
+  await page.click("#sample");
+  await page.waitForFunction(() => !document.querySelector("#sample").disabled, { timeout: 300_000 });
+  const repeatedStats = await page.$eval("#stats", (element) => element.textContent);
+  const repeatedImportStatus = await page.$eval("#importStatus", (element) => element.textContent);
+  check("重复导入幂等", /60 段/.test(repeatedStats) && /已写入 60 段/.test(repeatedImportStatus) && repeatedImportStatus.includes("可立即检索"), `${repeatedStats}; ${repeatedImportStatus}`);
+
+  await page.evaluate(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(["The acceptance-extra-token document describes incremental writes after index refresh."], "acceptance-extra.txt", { type: "text/plain" }));
+    document.querySelector("#files").files = transfer.files;
+  });
+  await page.click("#import");
+  await page.waitForFunction(() => !document.querySelector("#import").disabled, { timeout: 300_000 });
+  const incrementedStats = await page.$eval("#stats", (element) => element.textContent);
+  const incrementalImportStatus = await page.$eval("#importStatus", (element) => element.textContent);
+  await page.select("#mode", "vector");
+  await page.$eval("#query", (element) => { element.value = "The acceptance-extra-token document describes incremental writes after index refresh."; });
+  await page.click("#search");
+  await waitForSearch(page);
+  const incrementalHits = await page.$$eval("#results li .result-meta", (nodes) => nodes.map((node) => node.textContent));
+  check("新增文件写入后可向量检索", /61 段/.test(incrementedStats) && incrementalImportStatus.includes("可立即检索") && incrementalHits.some((hit) => hit.includes("acceptance-extra")), incrementedStats);
+  await page.select("#mode", "hybrid");
+  await page.$eval("#query", (element) => { element.value = "acceptance-extra-token"; });
+  await page.click("#search");
+  await waitForSearch(page);
+  const incrementalHybridHits = await page.$$eval("#results li .result-meta", (nodes) => nodes.map((node) => node.textContent));
+  check("新增文件写入后可混合检索", incrementalHybridHits.some((hit) => hit.includes("acceptance-extra")));
+
+  await page.$eval("#collection", (element, name) => {
+    element.value = name;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }, EMPTY_COLLECTION);
+  await page.waitForFunction((name) => document.querySelector("#stats").textContent.includes(`集合 ${name} · 0 段`), {}, EMPTY_COLLECTION);
+  await page.click("#search");
+  await waitForSearch(page);
+  const emptyHits = await page.$$eval("#results li .result-meta", (nodes) => nodes.length);
+  const emptyStatus = await page.$eval("#searchStatus", (element) => element.textContent);
+  await page.$eval("#collection", (element, name) => {
+    element.value = name;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }, COLLECTION);
+  await page.waitForFunction((name) => document.querySelector("#stats").textContent.includes(`集合 ${name} · 61 段`), {}, COLLECTION);
+  check("集合切换隔离且恢复原集合状态", emptyHits === 0 && /返回 0 条结果/.test(emptyStatus), emptyStatus);
+
   const wasmPage = await browser.newPage();
+  await wasmPage.evaluateOnNewDocument((name) => localStorage.setItem("seekdb-kb.collection", name), COLLECTION);
   await wasmPage.evaluateOnNewDocument(() => {
     Object.defineProperty(navigator, "gpu", { configurable: true, get: () => undefined });
   });
@@ -110,5 +166,8 @@ try {
 }
 
 const failed = checks.filter((entry) => !entry.passed);
+const resultsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "results");
+fs.mkdirSync(resultsDir, { recursive: true });
+fs.writeFileSync(path.join(resultsDir, "e2e.json"), JSON.stringify({ generatedAt: new Date().toISOString(), url: KB_URL, collection: COLLECTION, checks }, null, 2));
 console.log(`\n${checks.length - failed.length}/${checks.length} checks passed`);
 process.exit(failed.length === 0 ? 0 : 1);

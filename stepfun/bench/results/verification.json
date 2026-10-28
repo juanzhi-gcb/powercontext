@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "unitTests": { "command": "npm test", "passed": 3, "failed": 0 },
+  "browserAcceptance": { "command": "npm run bench:e2e", "passed": 13, "failed": 0, "details": "e2e.json" },
+  "matrix": { "command": "npm run bench:matrix", "configurations": 4, "repeats": 5, "querySamplesPerConfiguration": 120, "allRequestedBackendsMatched": true, "details": "matrix.json" },
+  "typecheck": { "command": "npm run typecheck", "passed": true },
+  "build": { "command": "npm run build", "passed": true },
+  "productionInstallAndStart": {
+    "installCommand": "npm ci --omit=dev",
+    "startCommand": "npm start",
+    "platform": "WSL2 Ubuntu 26.04 x64 / Node 22.0.0",
+    "typeScriptDevDependencyAbsent": true,
+    "healthEndpointPassed": true,
+    "invalidCollectionNameHttpStatus": 400,
+    "existingNativeRuntimeCacheReused": true
+  },
+  "modelIntegrity": { "onnxFilesVerified": 3, "method": "published fixed-revision SHA-256 and byte lengths" },
+  "technicalNote": { "file": "../../TECH_NOTE.pdf", "a4Pages": 1, "rasterizedAndVisuallyInspected": true },
+  "privateReplicaBaseline": { "details": "repository-copy.json", "allFiveSourceBranchesAndOneTagMatchedBeforeRepair": true },
+  "competitionPlatformEvaluation": "not executed by this local verification"
+}
