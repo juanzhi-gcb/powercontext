@@ -1,24 +1,30 @@
-# seekdb × 阶跃星辰：端侧 Embedding + 混合检索
+# NullPath / Research CI — Qoder 赛道
 
-本题应用在 [`stepfun/`](stepfun/) 目录。仓库根目录提供同名入口，可直接在根上执行：
+Qoder × OceanBase 2026 大赛 Qoder 赛道作品。默认入口是游戏化的「研究档案馆」：把研究想法写在纸条上，先拿到只标出处的检索回执，再进入确定性预检、证据链与历史裁决回放。公开站点在浏览器内执行与本地服务一致的哈希嵌入、词面 + 向量 RRF 检索和 `research-ci-rules-v1` 裁决，不连接在线后端。
+
+- 作品网站：<https://nullpath-research-ci-5dqanvro27t.qoder.zone>
+- 本项目目录：[`qoder/`](qoder/)
+- 运行说明：[`qoder/README.md`](qoder/README.md)
+- 开发记录与验证：[`qoder/evidence/qoder-development.md`](qoder/evidence/qoder-development.md)
+- 公开版实现：[`qoder/web/src/publicEngine.ts`](qoder/web/src/publicEngine.ts)
+
+本地完整应用：
 
 ```bash
-npm install     # 同时安装 stepfun/ 的依赖
-npm start       # 构建前端并启动服务，打开 http://127.0.0.1:8787
+cd qoder
+cp .env.example .env
+docker compose -f deploy/compose.yaml up --build
 ```
 
-| 路径 | 内容 |
-|---|---|
-| `stepfun/web/` | 前端（Vite + TypeScript，Transformers.js 端侧推理，WebGPU → WASM 自动降级） |
-| `stepfun/server/` | Express API + seekdb 嵌入式客户端 |
-| `stepfun/data/corpus/` | 演示语料 |
-| `stepfun/TECH_NOTE.md` | 一页技术说明（量化前后体积与检索质量、分阶段计时、降级验证） |
-| `stepfun/README.md` | 环境要求、完整启动步骤、环境变量 |
+工作台 `http://127.0.0.1:5173`，API 文档 `http://127.0.0.1:8080/docs`。本地验证：
 
-首次运行需联网下载两样资源：seekdb 原生运行时（约 54 MB，由 `npm run setup` 完成）与模型权重（FP32/FP16/INT8 三份共约 159 MB，可跳过，浏览器会直接从 Hugging Face 按需加载其中一份）。细节与镜像变量见 [`stepfun/README.md`](stepfun/README.md)。
+```bash
+cd qoder/server
+uv sync --extra dev
+uv run pytest
+uv run python ../evaluation/run_golden.py
+uv run python ../evaluation/run_ablation.py
+uv run python ../evaluation/run_secretary.py
+```
 
-提交仓库、分支与字段格式见 [`stepfun/SUBMISSION.md`](stepfun/SUBMISSION.md)。一页说明为 [`stepfun/TECH_NOTE.pdf`](stepfun/TECH_NOTE.pdf)，完整实验记录见 [`stepfun/BENCHMARK_REPORT.md`](stepfun/BENCHMARK_REPORT.md)。
-
-根目录执行 `npm run models` 下载固定版本并验证权重，`npm run bench:matrix` 复现五次四配置对照，`npm run bench:e2e` 跑浏览器端 13 项验收，`npm test` 验证端到端计时边界。端到端指标覆盖浏览器向量化、seekdb 请求及实际结果渲染。
-
-其余目录（`dify/`、`gaode/`、`minimax/`、`qoder/`）属于同一赛道的其它题目，与本题无关。
+技术栈：React 19 + Vite、FastAPI、seekdb（VECTOR + FULLTEXT/IK + RRF）、PowerContext 1.4.1。公开版是静态构建；资料导入、研究秘书、PowerContext 与人工终审需要本地 Compose。

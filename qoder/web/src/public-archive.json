@@ -1,0 +1,352 @@
+{
+  "version": "public-archive-2026-10-28",
+  "retrieval": "browser-vector-fts-rrf-v1",
+  "records": [
+    {
+      "id": "moon-original-cross-method-claim",
+      "title": "MOON original cross-method claim",
+      "idea": "Test whether prior-role entanglement is a mechanism shared across independent methods.",
+      "mechanism": "Prior role entanglement changes the effective intervention response across methods and must be separated from single-implementation artifacts.",
+      "failure_condition": "The effect appears in only one implementation or disappears under an artifact control.",
+      "task": "language-model-analysis",
+      "domain": "research",
+      "assumptions": [
+        "Independent method implementations are available",
+        "The same intervention can be applied across methods"
+      ],
+      "search_terms": [
+        "先验角色",
+        "先验角色纠缠",
+        "确认偏误",
+        "confirmation bias",
+        "跨方法",
+        "单方法伪影",
+        "prior-role",
+        "cross-method"
+      ],
+      "historical_decision": "NO_GO",
+      "available_at": "2026-01-10T00:00:00Z",
+      "evidence": [
+        {
+          "id": "moon-observation",
+          "source_type": "decision_record",
+          "title": "MOON single-method limitation",
+          "locator": "examples/sources/moon-review.md#observation",
+          "excerpt": "单方法实现中观察到的现象，不能直接证明跨方法的“先验角色纠缠”机制成立。",
+          "stance": "limits",
+          "published_at": "2026-01-10T00:00:00Z"
+        },
+        {
+          "id": "moon-repaint",
+          "source_type": "decision_record",
+          "title": "MOON mechanism repaint decision",
+          "locator": "examples/sources/moon-review.md#repaint",
+          "excerpt": "如果新提案只把已知 confirmation bias 或提示敏感性问题换成新术语，却没有改变因果条件，则不应作为新的机制贡献继续投入。",
+          "stance": "refutes",
+          "published_at": "2026-01-11T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "ibml-broad-phase-diagram",
+      "title": "IBML broad phase diagram",
+      "idea": "Map a broad reliability and complementarity phase diagram across tasks and models.",
+      "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models.",
+      "failure_condition": "A near-neighbor problem or a trivial estimator already explains the same phase structure.",
+      "task": "collaboration-analysis",
+      "domain": "research",
+      "assumptions": [
+        "Reliability and complementarity are identifiable from observations"
+      ],
+      "search_terms": [
+        "可靠性",
+        "互补性",
+        "协作性能",
+        "相图",
+        "可识别性",
+        "reliability",
+        "complementarity",
+        "collaboration",
+        "phase diagram",
+        "identifiability"
+      ],
+      "historical_decision": "NO_GO",
+      "available_at": "2026-01-12T00:00:00Z",
+      "evidence": [
+        {
+          "id": "ibml-broad-decision",
+          "source_type": "decision_record",
+          "title": "IBML broad question coverage",
+          "locator": "examples/sources/ibml-review.md#broad-decision",
+          "excerpt": "宽的“可靠性 × 互补性相图”已被近邻问题覆盖。仅更换任务、模型或坐标术语，没有形成可辩护的机制差异。",
+          "stance": "refutes",
+          "published_at": "2026-01-12T00:00:00Z"
+        },
+        {
+          "id": "ibml-narrow-condition",
+          "source_type": "decision_record",
+          "title": "IBML remaining identifiability condition",
+          "locator": "examples/sources/ibml-review.md#narrow-condition",
+          "excerpt": "只有收窄到“可观测控制统计量的不可识别性”，并明确哪个观测条件改变了旧结论，才允许进入 CONDITIONAL GO。",
+          "stance": "limits",
+          "published_at": "2026-01-13T00:00:00Z"
+        },
+        {
+          "id": "ibml-trivial-control",
+          "source_type": "decision_record",
+          "title": "IBML trivial explanation control",
+          "locator": "examples/sources/ibml-review.md#trivial-control",
+          "excerpt": "简单加权、阈值或现有估计器若能解释相同现象，就不能把相图本身当作充分的新机制证据。",
+          "stance": "limits",
+          "published_at": "2026-01-13T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "codealign-mechanism-baseline",
+      "title": "CodeAlign mechanism baseline",
+      "idea": "Test whether representation alignment causes robust code transfer under a matched data intervention.",
+      "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+      "failure_condition": "The required checkpoint or minimum data is unavailable, or the alignment intervention has no discriminating effect.",
+      "task": "code-alignment",
+      "domain": "research",
+      "assumptions": [
+        "A pinned checkpoint is available",
+        "Data composition can be controlled"
+      ],
+      "search_terms": [
+        "表示对齐",
+        "代码迁移",
+        "数据组成",
+        "检查点",
+        "representation alignment",
+        "code alignment",
+        "code transfer",
+        "checkpoint"
+      ],
+      "historical_decision": "CONDITIONAL_GO",
+      "available_at": "2026-01-15T00:00:00Z",
+      "evidence": [
+        {
+          "id": "codealign-mechanism-2026-01-15",
+          "source_type": "decision_record",
+          "title": "CodeAlign early mechanism review",
+          "locator": "examples/sources/codealign-review.md#mechanism-2026-01-15",
+          "excerpt": "当时机制问题与工程条件需要分开判断。若只回放该日期前已可用的材料，不能引入后续工程否决来改写当时的机制建议。",
+          "stance": "limits",
+          "published_at": "2026-01-15T00:00:00Z"
+        },
+        {
+          "id": "codealign-engineering-2026-03-15",
+          "source_type": "log",
+          "title": "CodeAlign later engineering review",
+          "locator": "examples/sources/codealign-review.md#engineering-2026-03-15",
+          "excerpt": "后续检查发现所需数据与 checkpoint 不满足条件，继续追加研究投入无法形成最小闭环。",
+          "stance": "refutes",
+          "published_at": "2026-03-15T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "moon-repaint-candidate",
+      "title": "MOON repaint candidate",
+      "idea": "Revisit confirmation bias as a new cross-method prior-role mechanism with a new benchmark.",
+      "mechanism": "Prior role entanglement changes the effective intervention response across methods and must be separated from single-implementation artifacts.",
+      "failure_condition": "The effect appears in only one implementation or disappears under an artifact control.",
+      "task": "language-model-analysis",
+      "domain": "research",
+      "assumptions": [
+        "A new benchmark is sufficient to establish a new mechanism"
+      ],
+      "search_terms": [
+        "先验角色",
+        "先验角色纠缠",
+        "确认偏误",
+        "confirmation bias",
+        "跨方法",
+        "单方法伪影",
+        "prior-role",
+        "cross-method"
+      ],
+      "historical_decision": null,
+      "available_at": "2026-02-01T00:00:00Z",
+      "evidence": []
+    },
+    {
+      "id": "ibml-broad-revisit",
+      "title": "IBML broad revisit",
+      "idea": "Rebuild the reliability and complementarity phase diagram on a new model family.",
+      "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models.",
+      "failure_condition": "A near-neighbor problem or a trivial estimator already explains the same phase structure.",
+      "task": "collaboration-analysis",
+      "domain": "research",
+      "assumptions": [
+        "Changing the model family creates a new research question"
+      ],
+      "search_terms": [
+        "可靠性",
+        "互补性",
+        "协作性能",
+        "相图",
+        "可识别性",
+        "reliability",
+        "complementarity",
+        "collaboration",
+        "phase diagram",
+        "identifiability"
+      ],
+      "historical_decision": null,
+      "available_at": "2026-02-01T00:00:00Z",
+      "evidence": []
+    },
+    {
+      "id": "ibml-identifiability-narrow",
+      "title": "IBML identifiability narrow",
+      "idea": "Test when observable control statistics cannot identify reliability and complementarity separately.",
+      "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models, but observable control statistics may make the two factors unidentifiable.",
+      "failure_condition": "A simple estimator identifies both factors or the observation restriction does not change the old conclusion.",
+      "task": "collaboration-analysis",
+      "domain": "research",
+      "assumptions": [
+        "The observation map can be explicitly restricted",
+        "A trivial estimator control is available"
+      ],
+      "search_terms": [
+        "可靠性",
+        "互补性",
+        "协作性能",
+        "相图",
+        "可识别性",
+        "reliability",
+        "complementarity",
+        "collaboration",
+        "phase diagram",
+        "identifiability"
+      ],
+      "historical_decision": null,
+      "available_at": "2026-02-02T00:00:00Z",
+      "evidence": []
+    },
+    {
+      "id": "codealign-early-mechanism",
+      "title": "CodeAlign early mechanism",
+      "idea": "Run an early precheck for representation-mediated code transfer before later engineering findings.",
+      "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+      "failure_condition": "The alignment intervention cannot be distinguished from data mixture effects.",
+      "task": "code-alignment",
+      "domain": "research",
+      "assumptions": [
+        "The checkpoint available at this cutoff supports the intervention"
+      ],
+      "search_terms": [
+        "表示对齐",
+        "代码迁移",
+        "数据组成",
+        "检查点",
+        "representation alignment",
+        "code alignment",
+        "code transfer",
+        "checkpoint"
+      ],
+      "historical_decision": null,
+      "available_at": "2026-02-03T00:00:00Z",
+      "evidence": []
+    },
+    {
+      "id": "codealign-late-engineering",
+      "title": "CodeAlign late engineering",
+      "idea": "Continue the code transfer program after the required checkpoint became unavailable.",
+      "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+      "failure_condition": "The required checkpoint or minimum data is unavailable.",
+      "task": "code-alignment",
+      "domain": "research",
+      "assumptions": [
+        "Engineering substitutions will eventually reproduce the required intervention"
+      ],
+      "search_terms": [
+        "表示对齐",
+        "代码迁移",
+        "数据组成",
+        "检查点",
+        "representation alignment",
+        "code alignment",
+        "code transfer",
+        "checkpoint"
+      ],
+      "historical_decision": null,
+      "available_at": "2026-03-16T00:00:00Z",
+      "evidence": []
+    },
+    {
+      "id": "public-attention-is-all-you-need",
+      "title": "Attention Is All You Need",
+      "idea": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
+      "mechanism": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
+      "failure_condition": "External source record; no failure condition declared.",
+      "task": "language-model-analysis",
+      "domain": "research",
+      "assumptions": [],
+      "search_terms": [
+        "自注意力",
+        "注意力机制",
+        "长距离依赖",
+        "循环结构",
+        "序列转换",
+        "self-attention",
+        "attention",
+        "recurrence",
+        "long-range dependencies",
+        "transformer",
+        "sequence transduction"
+      ],
+      "historical_decision": null,
+      "available_at": "2017-06-12T00:00:00Z",
+      "evidence": [
+        {
+          "id": "evidence-public-attention",
+          "source_type": "paper",
+          "title": "Attention Is All You Need",
+          "locator": "https://arxiv.org/abs/1706.03762",
+          "excerpt": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
+          "stance": "supports",
+          "published_at": "2017-06-12T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "public-bert",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "idea": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
+      "mechanism": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
+      "failure_condition": "External source record; no failure condition declared.",
+      "task": "language-model-analysis",
+      "domain": "research",
+      "assumptions": [],
+      "search_terms": [
+        "双向编码器",
+        "预训练",
+        "语言理解",
+        "微调",
+        "bidirectional",
+        "pre-training",
+        "language understanding",
+        "fine-tune",
+        "transformer",
+        "transformers"
+      ],
+      "historical_decision": null,
+      "available_at": "2018-10-11T00:00:00Z",
+      "evidence": [
+        {
+          "id": "evidence-public-bert",
+          "source_type": "paper",
+          "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+          "locator": "https://arxiv.org/abs/1810.04805",
+          "excerpt": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
+          "stance": "supports",
+          "published_at": "2018-10-11T00:00:00Z"
+        }
+      ]
+    }
+  ]
+}

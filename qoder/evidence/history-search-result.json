@@ -1,0 +1,26 @@
+{
+  "query": "Test when observable control statistics cannot identify reliability and complementarity separately.",
+  "attempts_before": 11,
+  "attempts_after": 11,
+  "runs_before": 26,
+  "runs_after": 26,
+  "results": [
+    {
+      "title": "IBML identifiability narrow",
+      "evidence_count": 1,
+      "locators": [
+        "nullpath://experiments/ba6435b8-d104-48fb-b3d9-0f9312b726c5"
+      ]
+    },
+    {
+      "title": "CodeAlign mechanism baseline",
+      "evidence_count": 2,
+      "locators": [
+        "examples/sources/codealign-review.md#mechanism-2026-01-15",
+        "examples/sources/codealign-review.md#engineering-2026-03-15"
+      ]
+    }
+  ],
+  "retrieval": "seekdb-vector-fts-rrf-v1",
+  "note": "Real local API verification. The experiment locator is a synthetic API validation record, not a scientific result. Light search returned only records with locatable evidence and did not change attempt or run counts."
+}

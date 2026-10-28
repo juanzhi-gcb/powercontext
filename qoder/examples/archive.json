@@ -1,0 +1,241 @@
+{
+  "cards": [
+    {
+      "attempt": {
+        "title": "MOON original cross-method claim",
+        "idea": "Test whether prior-role entanglement is a mechanism shared across independent methods.",
+        "mechanism": "Prior role entanglement changes the effective intervention response across methods and must be separated from single-implementation artifacts.",
+        "task": "language-model-analysis",
+        "domain": "research",
+        "failure_condition": "The effect appears in only one implementation or disappears under an artifact control.",
+        "assumptions": ["Independent method implementations are available", "The same intervention can be applied across methods"],
+        "competing_explanations": ["Single-method implementation artifact", "Prompt sensitivity"],
+        "differentiator": "Cross-method controlled intervention rather than a single-method observation",
+        "available_at": "2026-01-10T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "historical_decision": "NO_GO",
+      "evidence": [
+        {
+          "id": "moon-observation",
+          "source_type": "decision_record",
+          "title": "MOON single-method limitation",
+          "locator": "examples/sources/moon-review.md#observation",
+          "excerpt": "单方法实现中观察到的现象，不能直接证明跨方法的“先验角色纠缠”机制成立。",
+          "stance": "limits",
+          "published_at": "2026-01-10T00:00:00Z"
+        },
+        {
+          "id": "moon-repaint",
+          "source_type": "decision_record",
+          "title": "MOON mechanism repaint decision",
+          "locator": "examples/sources/moon-review.md#repaint",
+          "excerpt": "如果新提案只把已知 confirmation bias 或提示敏感性问题换成新术语，却没有改变因果条件，则不应作为新的机制贡献继续投入。",
+          "stance": "refutes",
+          "published_at": "2026-01-11T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "attempt": {
+        "title": "IBML broad phase diagram",
+        "idea": "Map a broad reliability and complementarity phase diagram across tasks and models.",
+        "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models.",
+        "task": "collaboration-analysis",
+        "domain": "research",
+        "failure_condition": "A near-neighbor problem or a trivial estimator already explains the same phase structure.",
+        "assumptions": ["Reliability and complementarity are identifiable from observations"],
+        "competing_explanations": ["Simple weighted baseline", "Threshold estimator"],
+        "differentiator": "",
+        "available_at": "2026-01-12T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 36,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "historical_decision": "NO_GO",
+      "evidence": [
+        {
+          "id": "ibml-broad-decision",
+          "source_type": "decision_record",
+          "title": "IBML broad question coverage",
+          "locator": "examples/sources/ibml-review.md#broad-decision",
+          "excerpt": "宽的“可靠性 × 互补性相图”已被近邻问题覆盖。仅更换任务、模型或坐标术语，没有形成可辩护的机制差异。",
+          "stance": "refutes",
+          "published_at": "2026-01-12T00:00:00Z"
+        },
+        {
+          "id": "ibml-narrow-condition",
+          "source_type": "decision_record",
+          "title": "IBML remaining identifiability condition",
+          "locator": "examples/sources/ibml-review.md#narrow-condition",
+          "excerpt": "只有收窄到“可观测控制统计量的不可识别性”，并明确哪个观测条件改变了旧结论，才允许进入 CONDITIONAL GO。",
+          "stance": "limits",
+          "published_at": "2026-01-13T00:00:00Z"
+        },
+        {
+          "id": "ibml-trivial-control",
+          "source_type": "decision_record",
+          "title": "IBML trivial explanation control",
+          "locator": "examples/sources/ibml-review.md#trivial-control",
+          "excerpt": "简单加权、阈值或现有估计器若能解释相同现象，就不能把相图本身当作充分的新机制证据。",
+          "stance": "limits",
+          "published_at": "2026-01-13T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "attempt": {
+        "title": "CodeAlign mechanism baseline",
+        "idea": "Test whether representation alignment causes robust code transfer under a matched data intervention.",
+        "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+        "task": "code-alignment",
+        "domain": "research",
+        "failure_condition": "The required checkpoint or minimum data is unavailable, or the alignment intervention has no discriminating effect.",
+        "assumptions": ["A pinned checkpoint is available", "Data composition can be controlled"],
+        "competing_explanations": ["Data mixture difference", "Checkpoint quality difference"],
+        "differentiator": "Matched data composition with a direct representation intervention",
+        "available_at": "2026-01-15T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "historical_decision": "CONDITIONAL_GO",
+      "evidence": [
+        {
+          "id": "codealign-mechanism-2026-01-15",
+          "source_type": "decision_record",
+          "title": "CodeAlign early mechanism review",
+          "locator": "examples/sources/codealign-review.md#mechanism-2026-01-15",
+          "excerpt": "当时机制问题与工程条件需要分开判断。若只回放该日期前已可用的材料，不能引入后续工程否决来改写当时的机制建议。",
+          "stance": "limits",
+          "published_at": "2026-01-15T00:00:00Z"
+        },
+        {
+          "id": "codealign-engineering-2026-03-15",
+          "source_type": "log",
+          "title": "CodeAlign later engineering review",
+          "locator": "examples/sources/codealign-review.md#engineering-2026-03-15",
+          "excerpt": "后续检查发现所需数据与 checkpoint 不满足条件，继续追加研究投入无法形成最小闭环。",
+          "stance": "refutes",
+          "published_at": "2026-03-15T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "attempt": {
+        "title": "MOON repaint candidate",
+        "idea": "Revisit confirmation bias as a new cross-method prior-role mechanism with a new benchmark.",
+        "mechanism": "Prior role entanglement changes the effective intervention response across methods and must be separated from single-implementation artifacts.",
+        "task": "language-model-analysis",
+        "domain": "research",
+        "failure_condition": "The effect appears in only one implementation or disappears under an artifact control.",
+        "assumptions": ["A new benchmark is sufficient to establish a new mechanism"],
+        "competing_explanations": ["Single-method implementation artifact"],
+        "differentiator": "",
+        "available_at": "2026-02-01T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "evidence": []
+    },
+    {
+      "attempt": {
+        "title": "IBML broad revisit",
+        "idea": "Rebuild the reliability and complementarity phase diagram on a new model family.",
+        "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models.",
+        "task": "collaboration-analysis",
+        "domain": "research",
+        "failure_condition": "A near-neighbor problem or a trivial estimator already explains the same phase structure.",
+        "assumptions": ["Changing the model family creates a new research question"],
+        "competing_explanations": ["Simple weighted baseline"],
+        "differentiator": "",
+        "available_at": "2026-02-01T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "evidence": []
+    },
+    {
+      "attempt": {
+        "title": "IBML identifiability narrow",
+        "idea": "Test when observable control statistics cannot identify reliability and complementarity separately.",
+        "mechanism": "Reliability and complementarity jointly determine a broad phase diagram of collaboration performance across tasks and models, but observable control statistics may make the two factors unidentifiable.",
+        "task": "collaboration-analysis",
+        "domain": "research",
+        "failure_condition": "A simple estimator identifies both factors or the observation restriction does not change the old conclusion.",
+        "assumptions": ["The observation map can be explicitly restricted", "A trivial estimator control is available"],
+        "competing_explanations": ["Simple weighted baseline", "Existing threshold estimator"],
+        "differentiator": "Restrict the observation map so control statistics are unidentifiable; test the identifiability boundary instead of redrawing the broad phase diagram.",
+        "available_at": "2026-02-02T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "evidence": []
+    },
+    {
+      "attempt": {
+        "title": "CodeAlign early mechanism",
+        "idea": "Run an early precheck for representation-mediated code transfer before later engineering findings.",
+        "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+        "task": "code-alignment",
+        "domain": "research",
+        "failure_condition": "The alignment intervention cannot be distinguished from data mixture effects.",
+        "assumptions": ["The checkpoint available at this cutoff supports the intervention"],
+        "competing_explanations": ["Data mixture difference"],
+        "differentiator": "Add a direct representation intervention while matching data composition and checkpoint quality.",
+        "available_at": "2026-02-03T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": true,
+        "checkpoint_ready": true,
+        "pilot_hours": 24,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "evidence": []
+    },
+    {
+      "attempt": {
+        "title": "CodeAlign late engineering",
+        "idea": "Continue the code transfer program after the required checkpoint became unavailable.",
+        "mechanism": "Representation alignment mediates robust code transfer when data composition is controlled and the checkpoint supports the required intervention.",
+        "task": "code-alignment",
+        "domain": "research",
+        "failure_condition": "The required checkpoint or minimum data is unavailable.",
+        "assumptions": ["Engineering substitutions will eventually reproduce the required intervention"],
+        "competing_explanations": ["Checkpoint quality difference"],
+        "differentiator": "Use a substitute checkpoint without first establishing intervention equivalence.",
+        "available_at": "2026-03-16T00:00:00Z",
+        "gpu_count": 2,
+        "data_ready": false,
+        "checkpoint_ready": false,
+        "pilot_hours": 72,
+        "storage_gb": 100,
+        "baseline_first": false
+      },
+      "evidence": []
+    }
+  ]
+}

@@ -1,0 +1,351 @@
+{
+  "generated_at": "2026-10-27T02:30:57.315941+00:00",
+  "database": "nullpath_validation",
+  "cases": [
+    {
+      "mode": "vector",
+      "title": "MOON repaint candidate",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156"
+      ],
+      "evidence_ids": [
+        "moon-observation",
+        "moon-repaint",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ]
+    },
+    {
+      "mode": "vector",
+      "title": "IBML broad revisit",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "codealign-mechanism-2026-01-15"
+      ]
+    },
+    {
+      "mode": "vector",
+      "title": "IBML identifiability narrow",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "75c36325-9234-4af5-afc6-261c907e079c",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "vector",
+      "title": "CodeAlign early mechanism",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "moon-observation",
+        "moon-repaint",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ]
+    },
+    {
+      "mode": "vector",
+      "title": "CodeAlign late engineering",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "codealign-engineering-2026-03-15",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ]
+    },
+    {
+      "mode": "fulltext",
+      "title": "MOON repaint candidate",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3"
+      ],
+      "evidence_ids": [
+        "moon-observation",
+        "moon-repaint",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ]
+    },
+    {
+      "mode": "fulltext",
+      "title": "IBML broad revisit",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "75c36325-9234-4af5-afc6-261c907e079c",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "fulltext",
+      "title": "IBML identifiability narrow",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "75c36325-9234-4af5-afc6-261c907e079c",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "fulltext",
+      "title": "CodeAlign early mechanism",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "fulltext",
+      "title": "CodeAlign late engineering",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "3e89f70d-4762-4439-9250-ec9833f86a30"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "codealign-engineering-2026-03-15"
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "title": "MOON repaint candidate",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3"
+      ],
+      "evidence_ids": [
+        "moon-observation",
+        "moon-repaint",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "title": "IBML broad revisit",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "title": "IBML identifiability narrow",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "75c36325-9234-4af5-afc6-261c907e079c",
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b"
+      ],
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "title": "CodeAlign early mechanism",
+      "passed": true,
+      "decision": "CONDITIONAL_GO",
+      "expected_decision": "CONDITIONAL_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "75c36325-9234-4af5-afc6-261c907e079c"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "moon-observation",
+        "moon-repaint"
+      ]
+    },
+    {
+      "mode": "hybrid",
+      "title": "CodeAlign late engineering",
+      "passed": true,
+      "decision": "NO_GO",
+      "expected_decision": "NO_GO",
+      "required_evidence_recalled": true,
+      "forbidden_evidence_recalled": [],
+      "recalled_attempt_ids": [
+        "b1bcd412-a0f1-4c1c-b389-b2be80bb7ed3",
+        "811de7ed-342f-4e37-8a59-5464a47c781b",
+        "863cbf94-5634-4d6f-a8f6-71bdf0509327",
+        "3e89f70d-4762-4439-9250-ec9833f86a30",
+        "aa815c0c-c20b-4cbb-b236-fa385b08b156",
+        "be48d5fc-76d2-46e1-bc4f-e1edac314c4d"
+      ],
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "codealign-engineering-2026-03-15"
+      ]
+    }
+  ],
+  "note": "Each mode reruns the real seekdb ranking path and deterministic decision policy; no LLM is used."
+}

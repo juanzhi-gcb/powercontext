@@ -1,0 +1,128 @@
+{
+  "generated_at": "2026-10-27T02:30:56.920494+00:00",
+  "api": "http://127.0.0.1:8081/api",
+  "passed": true,
+  "cases": [
+    {
+      "title": "MOON repaint candidate",
+      "passed": true,
+      "expected_decision": "NO_GO",
+      "actual_decision": "NO_GO",
+      "reason_code": "MECHANISM_REPACKAGED",
+      "source_run_id": "dd93dbb8-1921-491e-918d-6b1d2e2256f0",
+      "replay_run_id": "7c663281-7983-4115-94cc-50ac70fcd25b",
+      "evidence_ids": [
+        "moon-observation",
+        "moon-repaint",
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control"
+      ],
+      "assertions": {
+        "decision": true,
+        "required_evidence": true,
+        "forbidden_evidence": true,
+        "cutoff_integrity": true,
+        "snapshot_integrity": true,
+        "version_integrity": true,
+        "context_integrity": true
+      }
+    },
+    {
+      "title": "IBML broad revisit",
+      "passed": true,
+      "expected_decision": "NO_GO",
+      "actual_decision": "NO_GO",
+      "reason_code": "MECHANISM_REPACKAGED",
+      "source_run_id": "6dd58471-b238-4604-88d4-3f7a023708e9",
+      "replay_run_id": "16bd38fe-fc79-403c-9196-9a260b241a2e",
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ],
+      "assertions": {
+        "decision": true,
+        "required_evidence": true,
+        "forbidden_evidence": true,
+        "cutoff_integrity": true,
+        "snapshot_integrity": true,
+        "version_integrity": true,
+        "context_integrity": true
+      }
+    },
+    {
+      "title": "IBML identifiability narrow",
+      "passed": true,
+      "expected_decision": "CONDITIONAL_GO",
+      "actual_decision": "CONDITIONAL_GO",
+      "reason_code": "DIFFERENTIATED_MECHANISM",
+      "source_run_id": "80bd9ae3-437b-45cf-adc7-9e5df975f808",
+      "replay_run_id": "a3a15920-1964-4925-a1be-b77f31f53408",
+      "evidence_ids": [
+        "ibml-broad-decision",
+        "ibml-narrow-condition",
+        "ibml-trivial-control",
+        "moon-observation",
+        "moon-repaint"
+      ],
+      "assertions": {
+        "decision": true,
+        "required_evidence": true,
+        "forbidden_evidence": true,
+        "cutoff_integrity": true,
+        "snapshot_integrity": true,
+        "version_integrity": true,
+        "context_integrity": true
+      }
+    },
+    {
+      "title": "CodeAlign early mechanism",
+      "passed": true,
+      "expected_decision": "CONDITIONAL_GO",
+      "actual_decision": "CONDITIONAL_GO",
+      "reason_code": "DIFFERENTIATED_MECHANISM",
+      "source_run_id": "beb13687-79f1-4e5e-84ca-58afe4736dc7",
+      "replay_run_id": "b8c3f5bc-6f4d-4c9f-b381-a37a65fceb31",
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "moon-observation",
+        "moon-repaint"
+      ],
+      "assertions": {
+        "decision": true,
+        "required_evidence": true,
+        "forbidden_evidence": true,
+        "cutoff_integrity": true,
+        "snapshot_integrity": true,
+        "version_integrity": true,
+        "context_integrity": true
+      }
+    },
+    {
+      "title": "CodeAlign late engineering",
+      "passed": true,
+      "expected_decision": "NO_GO",
+      "actual_decision": "NO_GO",
+      "reason_code": "DETERMINISTIC_GATE_FAILED",
+      "source_run_id": "a6919c83-fb2a-477e-851a-471bb0a03b78",
+      "replay_run_id": "f05fb1cc-c4dd-4d10-b722-617800615936",
+      "evidence_ids": [
+        "codealign-mechanism-2026-01-15",
+        "codealign-engineering-2026-03-15"
+      ],
+      "assertions": {
+        "decision": true,
+        "required_evidence": true,
+        "forbidden_evidence": true,
+        "cutoff_integrity": true,
+        "snapshot_integrity": true,
+        "version_integrity": true,
+        "context_integrity": true
+      }
+    }
+  ],
+  "note": "Results come from the configured local API; demo cards are reconstructed validation fixtures, not original laboratory logs."
+}
