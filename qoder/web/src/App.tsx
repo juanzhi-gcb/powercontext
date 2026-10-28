@@ -151,7 +151,7 @@ export default function App() {
           <div className="topbar-actions">
             {staticDemo ? <span className="demo-notice"><FileClock size={14} />公开版 · 浏览器内计算</span> : !live && <span className="demo-notice"><FileClock size={14} />展示数据已标注</span>}
             {live && <span className="live-notice"><span className="pulse-dot online" />LIVE</span>}
-            <a href="https://github.com/AtoFuture/NullPath-Research-CI" target="_blank" rel="noreferrer" aria-label="打开代码仓库"><GitBranch size={17} /><span>Repository</span><ArrowUpRight size={13} /></a>
+            <a href="https://github.com/juanzhi-gcb/powercontext/tree/submit/qoder/qoder" target="_blank" rel="noreferrer" aria-label="打开代码仓库"><GitBranch size={17} /><span>Repository</span><ArrowUpRight size={13} /></a>
           </div>
         </header>
         <main>

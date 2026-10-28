@@ -25,7 +25,7 @@ import { DecisionBadge } from "./DecisionBadge";
 
 export type HallSheetKind = "library" | "secretary" | "verdicts" | "project" | "precheck";
 
-const repository = "https://github.com/AtoFuture/NullPath-Research-CI";
+const repository = "https://github.com/juanzhi-gcb/powercontext/tree/submit/qoder/qoder";
 const stanceLabels = { supports: "支持", refutes: "反证", limits: "限制" };
 const sourceTypeLabels: Record<string, string> = { paper: "论文", log: "复现记录", code_audit: "代码审计" };
 const librarySources = sampleSecretary.proposals.flatMap((proposal) => proposal.sources);

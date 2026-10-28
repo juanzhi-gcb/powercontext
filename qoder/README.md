@@ -8,6 +8,13 @@
 
 研究资料导入后，「研究秘书」会扫描资料库并提出知识线、疑似重复或孤立资料提案；只有人工接受的知识线才写入 PowerContext，作为后续预检的上下文引用。秘书不新增或修改 seekdb 中的证据与裁决。
 
+## 比赛提交
+
+- 作品网站：<https://nullpath-research-ci-5dqanvro27t.qoder.zone>
+- 提交仓库：<https://github.com/juanzhi-gcb/powercontext>，分支 `submit/qoder`，项目目录 `qoder/`。
+- 本地运行与验证：见下文「启动完整应用」与「验证」。
+- 开发记录与验收材料：`evidence/qoder-development.md`、`evidence/`。
+
 ## 技术分工
 
 - **seekdb：研究事实源。** 保存研究尝试、证据、比较、检查、运行、实验和人工裁决；使用向量、全文和结构化过滤进行 RRF 混合召回。
@@ -121,7 +128,7 @@ uv run python ../evaluation/run_secretary.py
 
 资料库闭环通过真实主 API 验收：导入 `evidence/library-import-fixture.md`（arXiv:1706.03762 的公开摘要与原始链接），第一次返回 `imported=1, skipped=0`，重复导入返回 `imported=0, skipped=1`；`GET /api/sources` 保留 `2017-06-12`、`https://arxiv.org/abs/1706.03762` 和稳定 `source-…` ID。相关想法检索将论文排在首位；在 `2026-03-01` cutoff 的真实预检中，论文作为第 2 个比较出现并带回原始出处。
 
-档案馆首屏通过真实主 API 验收：输入 “Replace recurrence with self-attention to model long-range dependencies” 后，回执展示 Attention 与 BERT 两条真实召回及各自可定位出处，盖章「有出处」，考据币从 20 增至 35；点「继续正式考据」会把想法带入表单，机制字段留空等待补充。桌面 1440×900、1024×768 与手机 390×844 三档均完成“写纸条 → 回执”，390×844 另验证了继续预检与表单带入；控制台无错误，手机无横向溢出。公开静态构建现在改用浏览器内引擎：同一份输入会执行真实的哈希嵌入、词面+向量 RRF 检索与确定性预检，不再回放固定样例。2026-10-28 发布动态版到公开站点；`confirmation bias` 召回 MOON original（2 条证据），`self-attention transformer` 召回 Attention 与 BERT，`今天天气` 返回「查无旧档」且不提供继续按钮；IBML 示例在浏览器内得到 `CONDITIONAL_GO`、9 项通过、0 项失败、3 条证据和 1 条历史比较。桌面 1440×900 与手机 390×844 均无横向溢出、控制台 0 错误。纸条只要非空就能提交，1–4 个字的短查询也会照常查档；空纸条会在上方提示先写一句，不会静默忽略点击，输入框旁只保留“写得越具体，越容易翻到旧档”的软提示。公开大厅的次级入口也收进了馆内：底部「我的馆藏 / 取回旧裁决 / 技术档案」、侧边与研究秘书、今日归档和抽屉菜单都会在当前大厅打开纸页式档案，不再跳回浅色工作台；「正式考据」在馆内打开浏览器预检表单，报告同样以纸页呈现。同日以 action `cd59dd92-93bb-40d3-be4b-11d1959b630f` 重新发布馆内导航修复，线上入口引用 `index-BRBSUW2S.js` / `index-DZ_-GYrD.css`；匿名桌面与手机复测五个入口和 IBML 报告，均无横向溢出、控制台 0 错误，线上预检返回 `CONDITIONAL_GO`（9 通过 / 0 失败 / 3 条证据 / 1 条比较）。
+档案馆首屏通过真实主 API 验收：输入 “Replace recurrence with self-attention to model long-range dependencies” 后，回执展示 Attention 与 BERT 两条真实召回及各自可定位出处，盖章「有出处」，考据币从 20 增至 35；点「继续正式考据」会把想法带入表单，机制字段留空等待补充。桌面 1440×900、1024×768 与手机 390×844 三档均完成“写纸条 → 回执”，390×844 另验证了继续预检与表单带入；控制台无错误，手机无横向溢出。公开静态构建现在改用浏览器内引擎：同一份输入会执行真实的哈希嵌入、词面+向量 RRF 检索与确定性预检，不再回放固定样例。2026-10-28 发布动态版到公开站点；`confirmation bias` 召回 MOON original（2 条证据），`self-attention transformer` 召回 Attention 与 BERT，`今天天气` 返回「查无旧档」且不提供继续按钮；IBML 示例在浏览器内得到 `CONDITIONAL_GO`、9 项通过、0 项失败、3 条证据和 1 条历史比较。桌面 1440×900 与手机 390×844 均无横向溢出、控制台 0 错误。纸条只要非空就能提交，1–4 个字的短查询也会照常查档；空纸条会在上方提示先写一句，不会静默忽略点击，输入框旁只保留“写得越具体，越容易翻到旧档”的软提示。公开大厅的次级入口也收进了馆内：底部「我的馆藏 / 取回旧裁决 / 技术档案」、侧边与研究秘书、今日归档和抽屉菜单都会在当前大厅打开纸页式档案，不再跳回浅色工作台；「正式考据」在馆内打开浏览器预检表单，报告同样以纸页呈现。同日先以 action `cd59dd92-93bb-40d3-be4b-11d1959b630f` 发布馆内导航修复（当时线上引用 `index-BRBSUW2S.js` / `index-DZ_-GYrD.css`）。随后以 action `314fef4f-0343-4e96-92b3-168a34598ee1` 发布仓库链接修复，当前线上入口引用 `index--PnxTbZK.js` / `index-DZ_-GYrD.css`；馆内「代码仓库」与抽屉入口统一指向大赛团队仓库的 `submit/qoder` 分支。匿名桌面与手机复测五个入口和 IBML 报告，均无横向溢出、控制台 0 错误，线上预检返回 `CONDITIONAL_GO`（9 通过 / 0 失败 / 3 条证据 / 1 条比较）。
 
 第二份验收材料 `evidence/library-import-fixture-bert.md`（arXiv:1810.04805 的公开摘要）同样首次导入 1 段、重复导入跳过 1 段；两篇论文共同进入秘书扫描。秘书闭环使用真实主 API 验收：2 个资料分段生成 1 条 `knowledge_line` 提案，人工接受后上下文 revision 为 5；随后的真实预检 `d7c41dfc-1a2c-4aae-b9f2-01634ed9bd40` 在 `context_refs` 中固定该 revision，并召回 Attention 论文。该预检中 BERT 未进入 top-6 融合比较，这是当前召回上限与 RRF 权重的已知边界，未为演示调高上限。回执见 `evidence/secretary-last-run.json`。
 

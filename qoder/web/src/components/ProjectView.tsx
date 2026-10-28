@@ -1,6 +1,6 @@
 import { ArrowUpRight, BookOpen, CheckCircle2, Code2, Database, GitBranch, PackageCheck, TerminalSquare } from "lucide-react";
 
-const repository = "https://github.com/AtoFuture/NullPath-Research-CI";
+const repository = "https://github.com/juanzhi-gcb/powercontext/tree/submit/qoder/qoder";
 
 export function ProjectView() {
   return (

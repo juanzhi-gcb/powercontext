@@ -3,9 +3,9 @@
 ## 项目与仓库
 
 - 项目：NullPath / Research CI。
-- 独立仓库：`AtoFuture/NullPath-Research-CI`。
-- 分支：`2026-competition-ecosystem`。
-- 官方 `oceanbase/powercontext` 仅作为基线与 PowerContext 实现参考，项目代码位于独立仓库的 `qoder/`。
+- 开发仓库：`AtoFuture/NullPath-Research-CI`，分支 `2026-competition-ecosystem`。
+- 比赛提交仓库：`juanzhi-gcb/powercontext`，分支 `submit/qoder`，项目位于 `qoder/`；平台登记仓库固定，评测读取该分支。
+- 官方 `oceanbase/powercontext` 仅作为基线与 PowerContext 实现参考，项目代码位于 `qoder/`。
 - 主要需求拆解、FastAPI 与 React 实现、数据库接入、测试修复、Docker 调试、浏览器验收和发布准备均由 Qoder 在本次会话中执行。
 
 ## 实现过程
@@ -58,6 +58,7 @@
 - 公开预检曾把无证据的 IBML identifiability narrow 排到首位，导致比较缺少可定位证据；现在检索池先过滤 cutoff 内无证据记录，报告带回 IBML broad phase diagram 的 3 条证据。
 - 公开回执的长论文摘要视觉过重；机制文本截断到 260 字并保留两行 clamp。手机端回执表头改为堆叠，避免「PUBLIC ARCHIVE RECEIPT · 浏览器实时检索」与回执编号互相挤压。
 - 用户反馈点击馆内入口会跳回浅色工作台、风格割裂；公开演示模式的全部入口改为在同一档案馆内打开纸页：我的馆藏、研究秘书、旧裁决、技术档案与正式考据分别渲染馆内纸页，回执的「继续」和抽屉菜单也走同一套；真实/自托管模式仍保留原工作台路由。旧裁决直接复用公开档案中的历史裁决与证据，不新增后端请求。
+- 公开站馆内的「代码仓库」入口仍指向个人开发仓库，与平台登记的团队仓库不一致；已把大厅抽屉、技术档案和顶部仓库链接统一改为 `juanzhi-gcb/powercontext` 的 `submit/qoder` 分支，并在 README 增加比赛提交段落。
 
 ## 验证证据
 
@@ -93,6 +94,7 @@
 | 动态公开版发布 | 2026-10-28 发布 action `d247e470-e73f-4dec-b51b-41ce85e54a4d` 到 `https://nullpath-research-ci-5dqanvro27t.qoder.zone`；线上入口引用 `index-C70i6bnz.js` / `index-DAY4czuc.css`，与本地 `dist` 一致，匿名桌面与手机端复测通过 |
 | 公开大厅馆内导航 | 演示模式下「我的馆藏 / 正式考据 / 研究秘书 / 取回旧裁决 / 技术档案」、今日归档与底部入口全部在馆内打开纸页，侧栏保持隐藏；IBML 示例报告 9 通过 / 0 失败 / 3 条证据 / 1 条比较；1440×900 与 390×844 无横向溢出、控制台 0 错误 |
 | 馆内导航修复发布 | 2026-10-28 发布 action `cd59dd92-93bb-40d3-be4b-11d1959b630f` 到同一站点；线上入口引用 `index-BRBSUW2S.js` / `index-DZ_-GYrD.css`，匿名桌面与 390px 手机打开旧裁决、技术档案与正式考据均在馆内，IBML 示例返回 `CONDITIONAL_GO`、9 通过 / 0 失败 / 3 条证据 / 1 条比较，控制台 0 错误、无横向溢出 |
+| 馆内仓库链接修复 | 2026-10-28 发布 action `314fef4f-0343-4e96-92b3-168a34598ee1`；当前线上引用 `index--PnxTbZK.js` / `index-DZ_-GYrD.css`，抽屉、技术档案和构建产物均只引用 `juanzhi-gcb/powercontext/tree/submit/qoder/qoder`；IBML 示例仍返回 `CONDITIONAL_GO`、9 通过 / 0 失败 / 3 条证据 / 1 条比较，桌面无横向溢出、控制台 0 错误 |
 
 详细机器结果见 `golden-results.json` 与 `ablation-results.json`。三路检索在这组小样本上都通过，不据此声称混合检索优于单路。
 
@@ -163,4 +165,5 @@ uv run python ../evaluation/run_secretary.py
 
 - 推送已由账号持有人完成：远端 `2026-competition-ecosystem` HEAD 为 `1a2819c2`，与本地一致，三个提交均在远端，默认分支已指向该分支。
 - 仓库已设为公开；2026-10-27 匿名访问 `https://github.com/AtoFuture/NullPath-Research-CI` 返回 200，无需授权即可查看。
+- 2026-10-28 将 `qoder/` 项目提交到大赛登记的团队仓库 `juanzhi-gcb/powercontext` 的 `submit/qoder` 分支，未改动队友共用的 `2026-competition-ecosystem`；平台填报该分支的完整 Commit。
 - 仍需在 Qoder 客户端补充 Qoder 账号 UID，以及关键开发环节的对话截图或录屏。

@@ -418,7 +418,7 @@ export function ArchiveHall({ live, onContinue, onNavigate }: { live: boolean; o
         </section>)}
         <footer>
           <span className={`hall-status ${live ? "is-live" : "is-demo"}`}><i />{live ? "seekdb · PowerContext 在线" : demo ? "公开馆藏 · 浏览器实时检索" : "本地服务未连接"}</span>
-          <a href="https://github.com/AtoFuture/NullPath-Research-CI" target="_blank" rel="noreferrer">代码仓库<ArrowUpRight size={13} /></a>
+          <a href="https://github.com/juanzhi-gcb/powercontext/tree/submit/qoder/qoder" target="_blank" rel="noreferrer">代码仓库<ArrowUpRight size={13} /></a>
         </footer>
       </aside>
     </div>}
