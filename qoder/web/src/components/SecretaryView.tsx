@@ -163,13 +163,13 @@ export function SecretaryView({ live, onSources }: { live: boolean; onSources: (
       </section>}
 
       {readyReport && <section className="secretary-artifacts">
-        <div className="secretary-artifact"><Brain size={18} /><div><span>SECRETARY WORKSPACE</span><strong>运行状态与审阅收件箱</strong><code>revision {readyReport.workspace?.revision ?? "—"} · {readyReport.run_id ?? "—"}</code></div></div>
-        <div className="secretary-artifact"><ShieldCheck size={18} /><div><span>ACCEPTED CONTEXT</span><strong>已接受知识线进入预检上下文</strong><code>revision {readyReport.context?.revision ?? "—"} · {readyReport.context?.artifact_id ?? "—"}</code></div></div>
-        <div className="secretary-artifact-note"><Clock3 size={15} /><span>运行于 {readyReport.generated_at ? new Date(readyReport.generated_at).toLocaleString("zh-CN", { hour12: false }) : "—"} · 稳定提案 ID 会保留已有审阅结果。</span></div>
+        <div className="secretary-artifact"><Brain size={18} /><div><span>SECRETARY WORKSPACE</span><strong>运行状态与审阅收件箱</strong><code>revision {readyReport.workspace?.revision ?? "—"}，{readyReport.run_id ?? "—"}</code></div></div>
+        <div className="secretary-artifact"><ShieldCheck size={18} /><div><span>ACCEPTED CONTEXT</span><strong>已接受知识线进入预检上下文</strong><code>revision {readyReport.context?.revision ?? "—"}，{readyReport.context?.artifact_id ?? "—"}</code></div></div>
+        <div className="secretary-artifact-note"><Clock3 size={15} /><span>运行于 {readyReport.generated_at ? new Date(readyReport.generated_at).toLocaleString("zh-CN", { hour12: false }) : "—"}。稳定提案 ID 会保留已有审阅结果。</span></div>
       </section>}
 
       {readyReport && <div className="secretary-inbox">
-        <div className="secretary-inbox-heading"><div><span className="section-kicker">REVIEW INBOX</span><h2>{proposals.length ? `${proposals.length} 条待你判断的提案` : "本次没有生成提案"}</h2></div><span className="demo-chip">{staticDemo ? "静态样例" : "机器提案 · 人工审阅"}</span></div>
+        <div className="secretary-inbox-heading"><div><span className="section-kicker">REVIEW INBOX</span><h2>{proposals.length ? `${proposals.length} 条待你判断的提案` : "本次没有生成提案"}</h2></div><span className="demo-chip">{staticDemo ? "静态样例" : "机器提案，人工审阅"}</span></div>
         {!proposals.length && <div className="empty-state">资料太少或尚未形成可解释的连接。再导入一份相关资料后会重新计算；秘书不会为了凑数而虚构知识线。</div>}
         <div className="secretary-proposal-list">
           {proposals.map((proposal) => {
@@ -190,7 +190,7 @@ export function SecretaryView({ live, onSources }: { live: boolean; onSources: (
                 {proposal.sources.map((source) => <div className="secretary-source" key={source.attempt_id}>
                   <FileText size={15} />
                   <div><strong>{source.title}</strong>{/^https?:\/\//.test(source.locator) ? <a href={source.locator} target="_blank" rel="noreferrer">{source.locator}</a> : <code>{source.locator}</code>}</div>
-                  <span>{source.evidence_ids.length} 条证据 · {source.published_at.slice(0, 10)}</span>
+                  <span>{source.evidence_ids.length} 条证据，{source.published_at.slice(0, 10)}</span>
                 </div>)}
               </div>
               <div className="secretary-next"><span>建议下一步</span><p>{proposal.next_action}</p></div>

@@ -2,7 +2,7 @@
 
 Qoder × OceanBase 2026 大赛 Qoder 赛道作品。默认入口是游戏化的「研究档案馆」：把研究想法写在纸条上，先拿到只标出处的检索回执，再进入确定性预检、证据链与历史裁决回放。公开站点在浏览器内执行与本地服务一致的哈希嵌入、词面 + 向量 RRF 检索和 `research-ci-rules-v1` 裁决，不连接在线后端。
 
-- 作品网站：<https://nullpath-research-ci-5dqanvro27t.qoder.zone>
+- 作品网站：<https://nullpath-research-ci-b4ket19m2lz.qoder.zone>
 - 本项目目录：[`qoder/`](qoder/)
 - 运行说明：[`qoder/README.md`](qoder/README.md)
 - 开发记录与验证：[`qoder/evidence/qoder-development.md`](qoder/evidence/qoder-development.md)

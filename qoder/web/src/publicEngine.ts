@@ -1,6 +1,7 @@
 import corpusData from "./public-archive.json";
 import embeddingData from "./public-archive-embeddings.json";
 import { blake2b128 } from "./blake2b";
+import { isGlobalScope } from "./domains";
 import type {
   AttemptInput,
   CheckResult,
@@ -38,6 +39,16 @@ interface ArchiveRecord {
   historical_decision: Decision | null;
   available_at: string;
   evidence: Evidence[];
+  record_type?: string;
+  source?: string;
+  source_url?: string;
+  license?: string;
+  retrieved_at?: string;
+  original_doi?: string;
+  replication_doi?: string;
+  outcome?: string;
+  outcome_quote?: string;
+  discipline_raw?: string;
 }
 
 interface Candidate {
@@ -90,6 +101,14 @@ export function listPublicVerdicts(): PublicVerdict[] {
       evidence: record.evidence,
     }))
     .sort((left, right) => Date.parse(right.available_at) - Date.parse(left.available_at));
+}
+
+export function publicArchiveStats() {
+  return {
+    records: records.length,
+    withEvidence: records.filter((record) => record.evidence.length > 0).length,
+    verdicts: records.filter((record) => record.historical_decision).length,
+  };
 }
 
 const encoder = new TextEncoder();
@@ -203,11 +222,11 @@ function ftsScore(query: string, record: ArchiveRecord): number {
   return Math.round(score * 1e6) / 1e6;
 }
 
-function eligible(record: ArchiveRecord, candidate: Candidate, cutoff: string): boolean {
+function eligible(record: ArchiveRecord, candidate: Candidate, cutoff: string, matchAll: boolean): boolean {
   return (
     record.id !== candidate.id &&
     Date.parse(record.available_at) <= Date.parse(cutoff) &&
-    (record.task === candidate.task || record.domain === candidate.domain)
+    (matchAll || record.task === candidate.task || record.domain === candidate.domain)
   );
 }
 
@@ -215,18 +234,19 @@ function hybridRetrieve(
   candidate: Candidate,
   cutoff: string,
   queryEmbedding: number[],
-  options: { evidenceOnly?: boolean } = {},
+  options: { evidenceOnly?: boolean; matchAll?: boolean } = {},
 ): Scored[] {
   const evidenceOnly = options.evidenceOnly ?? false;
+  const matchAll = options.matchAll ?? false;
   const ftsRowsAll = records
-    .filter((record) => eligible(record, candidate, cutoff))
+    .filter((record) => eligible(record, candidate, cutoff, matchAll))
     .map((record) => ({ record, value: ftsScore(candidate.mechanism, record) }))
     .filter((row) => row.value > 0)
     .sort((left, right) => right.value - left.value);
+  const topValue = ftsRowsAll[0]?.value ?? 0;
   const gated = evidenceOnly
     ? ftsRowsAll.filter((row) => evidenceAt(row.record, cutoff).length > 0)
     : ftsRowsAll;
-  const topValue = gated[0]?.value ?? 0;
   const relevant = topValue > 0
     ? gated.filter((row) => row.value >= topValue * FTS_RELEVANCE_FLOOR)
     : [];
@@ -280,11 +300,11 @@ export async function searchPublicArchive(query: string): Promise<HistorySearchR
     idea: query,
     mechanism: query,
     failure_condition: "",
-    task: "research",
-    domain: "research",
+    task: "general",
+    domain: "",
     assumptions: [],
   };
-  const scored = hybridRetrieve(candidate, cutoff, embed(query), { evidenceOnly: true });
+  const scored = hybridRetrieve(candidate, cutoff, embed(query), { evidenceOnly: true, matchAll: true });
   const results: HistoryResult[] = [];
   for (const item of scored) {
     const evidence = evidenceAt(item.record, cutoff);
@@ -302,6 +322,13 @@ export async function searchPublicArchive(query: string): Promise<HistorySearchR
       fts_score: item.fts_score ?? undefined,
       fused_score: item.fused_score,
       evidence,
+      record_type: item.record.record_type,
+      source: item.record.source,
+      source_url: item.record.source_url,
+      outcome: item.record.outcome,
+      outcome_quote: item.record.outcome_quote,
+      original_doi: item.record.original_doi,
+      replication_doi: item.record.replication_doi,
     });
     if (results.length === SEARCH_RESULT_LIMIT) break;
   }
@@ -346,18 +373,54 @@ function constraints() {
   return { min_gpu_count: 2, max_pilot_hours: 48, min_storage_gb: 50, problem_before_baseline: true };
 }
 
-function minimalExperiment(input: AttemptInput) {
-  const competing = input.competing_explanations.length ? input.competing_explanations : ["strongest trivial baseline"];
-  return {
-    hypothesis:
-      input.differentiator ||
-      "The proposed mechanism differs from the closest historical explanation under a controlled intervention.",
-    intervention: "Change only the declared causal condition while holding data, model, budget, and evaluation fixed.",
-    control: `Run the strongest competing explanation: ${competing[0]}`,
-    metric: "Pre-register one mechanism-level discriminator and one task-level outcome before execution.",
-    threshold: "The intervention must outperform the control on the discriminator within the declared pilot budget.",
-    stop_condition: "Stop if data/checkpoint gates fail, the discriminator is inconclusive, or the 48-hour pilot budget is exceeded.",
-  };
+function quote(text: string, limit = 80): string {
+  const value = text.trim().replace(/\s+/g, " ");
+  if (value.length <= limit) return value;
+  const cut = value.slice(0, limit);
+  const punctuation = Math.max(cut.lastIndexOf("；"), cut.lastIndexOf(";"), cut.lastIndexOf("。"), cut.lastIndexOf("."), cut.lastIndexOf("，"), cut.lastIndexOf(","));
+  const boundary = punctuation >= limit / 2 ? punctuation : Math.max(punctuation, cut.lastIndexOf(" "));
+  return `${(boundary >= limit / 2 ? cut.slice(0, boundary) : cut).trimEnd()}…`;
+}
+
+function minimalExperiment(input: AttemptInput, top: Comparison | undefined) {
+  const differentiator = quote(input.differentiator.trim().replace(/[。；;.\s]+$/u, ""));
+  const competing = input.competing_explanations.map((item) => item.trim()).filter(Boolean);
+  const failure = input.failure_condition.trim().replace(/[。；;.\s]+$/u, "");
+  const target = input.task && input.task !== "general" ? `${input.task} 的任务分数` : "目标任务分数";
+  const historical = top && top.evidence.length && top.mechanism_similarity >= 0.12 ? quote(top.title, 48) : "";
+  const controlName = competing.length ? quote(competing[0], 48) : historical;
+
+  const hypothesis = differentiator
+    ? historical
+      ? `如果「${differentiator}」成立，那么在「${historical}」的任务设置下复现时，结果应出现可测差异；若没有差异，就不能主张这条路线比它多提供了机制信息。`
+      : `如果「${differentiator}」成立，最小实验应在「条件未改变」和「条件已改变」两组之间产生可测差异。`
+    : historical
+      ? `尚未声明差异：先写清与「${historical}」相比改变了哪个因果条件；没有这句话，假设不可检验。`
+      : "尚未声明差异：先写清改变了哪个因果条件；没有这句话，假设不可检验。";
+
+  const intervention = differentiator
+    ? historical
+      ? `只改「${differentiator}」；数据、模型版本、预算和评测保持固定，并以「${historical}」为参照。`
+      : `只改「${differentiator}」；其余条件全部固定。`
+    : "待补：写出唯一改变的变量；没有它就没有可执行的干预。";
+
+  const control = competing.length
+    ? `用「${quote(competing[0], 48)}」在相同数据和预算下跑同一套评测；如果它也能解释结果，新机制不成立。`
+    : historical
+      ? `先复现「${historical}」的做法作为控制；它是当前最接近、且有可定位证据的历史记录。`
+      : "待补：写下至少一个能解释同一结果的简单替代方案。";
+
+  const metric = differentiator
+    ? `机制指标：同一测量流程在「条件未改变」和「条件已改变」两组上的读数差，直接对应「${differentiator}」；任务指标：${target}。开跑前写死两者的计算方式。`
+    : "待补：先确定用什么数值判断新条件成立；没有可测指标就无法预注册。";
+
+  const threshold = controlName
+    ? `在 ${input.pilot_hours}h、${input.gpu_count} 块 GPU 内，让「${controlName}」也跑同一套评测；机制指标的差值必须大于它重复运行的波动（默认重复 2 次，开跑前可改）。`
+    : "待补：先确定控制组，才能设通过阈值。";
+
+  const stop_condition = `${failure || "机制指标没有分离"}；首轮超过 ${input.pilot_hours}h 也停止。`;
+
+  return { hypothesis, intervention, control, metric, threshold, stop_condition };
 }
 
 async function snapshot(cutoff: string) {
@@ -376,11 +439,15 @@ async function snapshot(cutoff: string) {
   return { hash, attempts: attempts.length, evidence: evidence.length };
 }
 
-export async function evaluatePublicAttempt(input: AttemptInput): Promise<Report> {
+export async function evaluatePublicAttempt(
+  input: AttemptInput,
+  options: { matchAll?: boolean } = {},
+): Promise<Report> {
   const cutoff = new Date();
   if (Date.parse(input.available_at) > cutoff.getTime()) {
     throw new Error("这份提案的资料时间晚于当前预检时间，不能回放到过去。请把资料可用时间改到当前时间之前。");
   }
+  const matchAll = options.matchAll ?? isGlobalScope(input.task, input.domain);
   const cutoffIso = cutoff.toISOString();
   const candidate: Candidate = {
     id: "public-candidate",
@@ -392,7 +459,7 @@ export async function evaluatePublicAttempt(input: AttemptInput): Promise<Report
     domain: input.domain,
     assumptions: input.assumptions,
   };
-  const scored = hybridRetrieve(candidate, cutoffIso, embed(embeddingText(candidate)), { evidenceOnly: true });
+  const scored = hybridRetrieve(candidate, cutoffIso, embed(embeddingText(candidate)), { evidenceOnly: true, matchAll });
   const evidenceByAttempt = new Map(scored.map((item) => [item.record.id, evidenceAt(item.record, cutoffIso)]));
   const comparisons: Comparison[] = scored.map((item) => {
     const evidence = evidenceByAttempt.get(item.record.id) ?? [];
@@ -417,6 +484,10 @@ export async function evaluatePublicAttempt(input: AttemptInput): Promise<Report
       mechanism_difference: result.difference,
       evidence_ids: result.evidence_ids,
       evidence,
+      record_type: item.record.record_type,
+      source: item.record.source,
+      source_url: item.record.source_url,
+      outcome: item.record.outcome,
     };
   });
 
@@ -489,7 +560,7 @@ export async function evaluatePublicAttempt(input: AttemptInput): Promise<Report
   } else {
     machineDecision = "INSUFFICIENT_EVIDENCE";
     reasonCode = "MECHANISM_RELATION_UNCERTAIN";
-    summary = "Retrieval did not establish a reliable mechanism relation; do not interpret novelty as approval.";
+    summary = "Retrieval did not establish a reliable mechanism relation; add a more specific mechanism description or a closer comparison.";
   }
 
   const publicSnapshot = await snapshot(cutoffIso);
@@ -510,7 +581,7 @@ export async function evaluatePublicAttempt(input: AttemptInput): Promise<Report
     comparisons,
     checks,
     constraints: limits,
-    minimal_experiment: minimalExperiment(input),
+    minimal_experiment: minimalExperiment(input, top),
     context_refs: [],
     versions: {
       model: PUBLIC_COMPARATOR,

@@ -11,7 +11,7 @@ export function ProjectView() {
         <p>先把自己的论文笔记、复现记录和技术报告导入本地证据库，再用一句话检索相关历史、失败原因和原始出处。需要正式投入建议时，再完成确定性预检、人工终审和最小判别实验。</p>
         <div className="project-links"><a className="button button-dark" href={repository} target="_blank" rel="noreferrer"><GitBranch size={17} />代码仓库<ArrowUpRight size={15} /></a><a className="button button-secondary" href="#run-guide"><BookOpen size={17} />运行说明</a></div>
       </div>
-      <section className="problem-statement"><span>真实痛点</span><p>历史候选问题、机制查重、对抗复核、工程审查和 GO / NO-GO 裁决分散在文档里，外部论文与团队踩坑记录也没有进入同一证据源。下一次选题时，团队重复查重、重复争论，甚至用未来结论误写过去。</p><strong>NO-GO 不等于科研失败。及时止损本身就是研究结果。</strong></section>
+      <section className="problem-statement"><span>真实痛点</span><p>历史候选问题、机制查重、对抗复核、工程审查和 GO / NO-GO 裁决分散在文档里，外部论文与团队踩坑记录也没有进入同一证据源。下一次选题时，团队重复查重、重复争论，甚至用未来结论误写过去。</p><strong>及时止损本身就是研究结果。</strong></section>
       <section className="project-section">
         <div className="section-number">01</div><div><span className="section-kicker">SYSTEM</span><h2>一条可核对的研究决策链</h2></div>
         <div className="architecture-flow">
@@ -43,7 +43,7 @@ export function ProjectView() {
         </div>
         <div className="verification-note"><CheckCircle2 size={18} /><p>初始数据、输入、操作步骤、预期结果和技术作用记录位于仓库 <code>qoder/examples/</code> 与 <code>qoder/evidence/</code>。资料库验收使用 arXiv 公开论文摘要验证导入与检索链路，不声称它是用户自己的实验结果；演示卡为依据框架重建的功能验证材料。研究秘书为确定性提案，不调用模型；接受的知识线只进入预检上下文，不修改证据与裁决。</p></div>
       </section>
-      <footer className="project-footer"><div><strong>NullPath / Research CI</strong><span>Build with Qoder · seekdb · PowerContext</span></div><a href={repository} target="_blank" rel="noreferrer">查看源码与提交记录<ArrowUpRight size={15} /></a></footer>
+      <footer className="project-footer"><div><strong>NullPath / Research CI</strong><span>Build with Qoder, seekdb, PowerContext</span></div><a href={repository} target="_blank" rel="noreferrer">查看源码与提交记录<ArrowUpRight size={15} /></a></footer>
     </div>
   );
 }

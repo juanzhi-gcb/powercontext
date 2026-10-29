@@ -44,16 +44,103 @@ def constraints_from_context(entries: list[dict[str, Any]]) -> dict[str, Any]:
     return constraints
 
 
-def minimal_experiment(attempt: dict[str, Any]) -> dict[str, str]:
-    competing = attempt.get("competing_explanations") or ["strongest trivial baseline"]
+def _quote(text: str, limit: int = 80) -> str:
+    value = " ".join(str(text).split())
+    if len(value) <= limit:
+        return value
+    cut = value[:limit]
+    punctuation = max(
+        cut.rfind("；"),
+        cut.rfind(";"),
+        cut.rfind("。"),
+        cut.rfind("."),
+        cut.rfind("，"),
+        cut.rfind(","),
+    )
+    boundary = punctuation if punctuation >= limit / 2 else max(punctuation, cut.rfind(" "))
+    return (cut[:boundary] if boundary >= limit / 2 else cut).rstrip() + "…"
+
+
+def _trim_sentence(text: str) -> str:
+    return text.strip().rstrip("。；;. \t\n")
+
+
+def minimal_experiment(
+    attempt: dict[str, Any], comparison: dict[str, Any] | None = None
+) -> dict[str, str]:
+    differentiator = _quote(_trim_sentence(attempt.get("differentiator") or ""))
+    competing = [
+        item.strip()
+        for item in attempt.get("competing_explanations") or []
+        if isinstance(item, str) and item.strip()
+    ]
+    failure = _trim_sentence(attempt.get("failure_condition") or "")
+    task = attempt.get("task") or "general"
+    target = f"{task} 的任务分数" if task != "general" else "目标任务分数"
+    historical = (
+        _quote(comparison["title"], 48)
+        if comparison
+        and comparison.get("evidence")
+        and float(comparison.get("mechanism_similarity") or 0) >= 0.12
+        else ""
+    )
+    control_name = _quote(competing[0], 48) if competing else historical
+    hours = attempt.get("pilot_hours", 0)
+    gpus = attempt.get("gpu_count", 0)
+
+    hypothesis = (
+        (
+            f"如果「{differentiator}」成立，那么在「{historical}」的任务设置下复现时，结果应出现可测差异；"
+            "若没有差异，就不能主张这条路线比它多提供了机制信息。"
+            if historical
+            else f"如果「{differentiator}」成立，最小实验应在「条件未改变」和「条件已改变」两组之间产生可测差异。"
+        )
+        if differentiator
+        else (
+            f"尚未声明差异：先写清与「{historical}」相比改变了哪个因果条件；没有这句话，假设不可检验。"
+            if historical
+            else "尚未声明差异：先写清改变了哪个因果条件；没有这句话，假设不可检验。"
+        )
+    )
+    intervention = (
+        (
+            f"只改「{differentiator}」；数据、模型版本、预算和评测保持固定，并以「{historical}」为参照。"
+            if historical
+            else f"只改「{differentiator}」；其余条件全部固定。"
+        )
+        if differentiator
+        else "待补：写出唯一改变的变量；没有它就没有可执行的干预。"
+    )
+    control = (
+        f"用「{_quote(competing[0], 48)}」在相同数据和预算下跑同一套评测；如果它也能解释结果，新机制不成立。"
+        if competing
+        else (
+            f"先复现「{historical}」的做法作为控制；它是当前最接近、且有可定位证据的历史记录。"
+            if historical
+            else "待补：写下至少一个能解释同一结果的简单替代方案。"
+        )
+    )
+    metric = (
+        f"机制指标：同一测量流程在「条件未改变」和「条件已改变」两组上的读数差，直接对应「{differentiator}」；"
+        f"任务指标：{target}。开跑前写死两者的计算方式。"
+        if differentiator
+        else "待补：先确定用什么数值判断新条件成立；没有可测指标就无法预注册。"
+    )
+    threshold = (
+        f"在 {hours}h、{gpus} 块 GPU 内，让「{control_name}」也跑同一套评测；"
+        "机制指标的差值必须大于它重复运行的波动（默认重复 2 次，开跑前可改）。"
+        if control_name
+        else "待补：先确定控制组，才能设通过阈值。"
+    )
+    stop_condition = f"{failure or '机制指标没有分离'}；首轮超过 {hours}h 也停止。"
+
     return {
-        "hypothesis": attempt.get("differentiator")
-        or "The proposed mechanism differs from the closest historical explanation under a controlled intervention.",
-        "intervention": "Change only the declared causal condition while holding data, model, budget, and evaluation fixed.",
-        "control": f"Run the strongest competing explanation: {competing[0]}",
-        "metric": "Pre-register one mechanism-level discriminator and one task-level outcome before execution.",
-        "threshold": "The intervention must outperform the control on the discriminator within the declared pilot budget.",
-        "stop_condition": "Stop if data/checkpoint gates fail, the discriminator is inconclusive, or the 48-hour pilot budget is exceeded.",
+        "hypothesis": hypothesis,
+        "intervention": intervention,
+        "control": control,
+        "metric": metric,
+        "threshold": threshold,
+        "stop_condition": stop_condition,
     }
 
 
@@ -237,7 +324,7 @@ def evaluate(
     else:
         decision = MachineDecision.INSUFFICIENT_EVIDENCE
         reason_code = "MECHANISM_RELATION_UNCERTAIN"
-        summary = "Retrieval did not establish a reliable mechanism relation; do not interpret novelty as approval."
+        summary = "Retrieval did not establish a reliable mechanism relation; add a more specific mechanism description or a closer comparison."
 
     if context_warning:
         checks.append(check("context.restore", "warn", "CONTEXT_UNAVAILABLE", context_warning))
@@ -259,7 +346,7 @@ def evaluate(
         "comparisons": comparisons,
         "checks": checks,
         "constraints": constraints,
-        "minimal_experiment": minimal_experiment(attempt),
+        "minimal_experiment": minimal_experiment(attempt, comparisons[0] if comparisons else None),
         "context_refs": context_refs,
         "versions": {
             "model": comparator_version,

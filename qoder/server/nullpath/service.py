@@ -5,6 +5,7 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
+from .aliases import expand_query, infer_task
 from .comparator import Comparator
 from .context import (
     PowerContextAdapter,
@@ -26,6 +27,8 @@ from .models import (
 )
 from .secretary import build_proposals, now_iso, secretary_context
 from .store import SeekDBStore
+
+GLOBAL_SCOPE = {"", "general", "research", "all"}
 
 
 class CutoffViolationError(ValueError):
@@ -83,16 +86,20 @@ class ResearchService:
 
     def search_history(self, query: str) -> dict[str, Any]:
         cutoff = datetime.now(UTC)
+        retrieval_text = expand_query(query)
+        task = infer_task(query)
         search_attempt = {
             "id": "read-only-history-search",
             "idea": query,
-            "mechanism": query,
+            "mechanism": retrieval_text,
             "failure_condition": "",
-            "task": "research",
-            "domain": "research",
+            "task": task or "general",
+            "domain": "",
         }
-        embedding = self.embedder.embed(query)
-        candidates = self.store.hybrid_retrieve(search_attempt, embedding, cutoff, limit=6)
+        embedding = self.embedder.embed(retrieval_text)
+        candidates = self.store.hybrid_retrieve(
+            search_attempt, embedding, cutoff, limit=6, match_all=task is None
+        )
         evidence = self.store.evidence_for_attempts(
             [candidate["id"] for candidate in candidates], cutoff
         )
@@ -121,10 +128,13 @@ class ResearchService:
         }
 
     def import_archive(self, archive: ArchiveImport) -> list[dict[str, Any]]:
-        existing_titles = {item["title"] for item in self.store.list_attempts()}
+        existing = {item["title"]: item for item in self.store.list_attempts()}
         imported = []
         for card in archive.cards:
-            if card.attempt.title in existing_titles:
+            current = existing.get(card.attempt.title)
+            if current is not None:
+                if current["task"] != card.attempt.task or current["domain"] != card.attempt.domain:
+                    self.store.update_scope(current["id"], card.attempt.task, card.attempt.domain)
                 continue
             imported.append(
                 self.store.import_card(card, self.embedder.embed(self.embedding_text(card.attempt)))
@@ -310,7 +320,8 @@ class ResearchService:
         attempt = self.store.get_attempt(request.attempt_id)
         if datetime.fromisoformat(attempt["available_at"]) > request.cutoff:
             raise CutoffViolationError("Candidate attempt is not available at the requested cutoff")
-        embedding = self.embedder.embed(self.embedding_text(attempt))
+        retrieval_text = expand_query(self.embedding_text(attempt))
+        embedding = self.embedder.embed(retrieval_text)
         context_entries: list[dict[str, Any]] = []
         context_warning = None
         if replay and original_run:
@@ -327,7 +338,11 @@ class ResearchService:
                 context_warning = str(error)
         context_refs = self.context.references(context_entries)
 
-        candidates = self.store.hybrid_retrieve(attempt, embedding, request.cutoff)
+        match_all = attempt["task"] in GLOBAL_SCOPE and attempt["domain"] in GLOBAL_SCOPE
+        search_attempt = {**attempt, "mechanism": retrieval_text}
+        candidates = self.store.hybrid_retrieve(
+            search_attempt, embedding, request.cutoff, match_all=match_all
+        )
         evidence = self.store.evidence_for_attempts(
             [candidate["id"] for candidate in candidates], request.cutoff
         )

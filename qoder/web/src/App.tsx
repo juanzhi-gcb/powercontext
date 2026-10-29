@@ -138,7 +138,7 @@ export default function App() {
         <div className="sidebar-bottom">
           <button className="service-card" onClick={() => setPage("context")}>
             <span className={`pulse-dot ${live ? "online" : staticDemo ? "demo" : "offline"}`} />
-            <div><strong>{checking ? "检查本地服务" : live ? "本地服务已连接" : staticDemo ? "公开版 · 实时计算" : "未连接本地服务"}</strong><small>{live ? "seekdb · PowerContext" : staticDemo ? "公开馆藏 · 结果不落盘" : "查看技术分工与状态"}</small></div>
+            <div><strong>{checking ? "检查本地服务" : live ? "本地服务已连接" : staticDemo ? "公开版，实时计算" : "未连接本地服务"}</strong><small>{live ? "seekdb / PowerContext" : staticDemo ? "公开馆藏，结果不落盘" : "查看技术分工与状态"}</small></div>
             <ChevronRight size={14} />
           </button>
           <div className="competition-mark"><FlaskConical size={15} /><span>Qoder × OceanBase<br />2026 Competition</span></div>
@@ -149,7 +149,7 @@ export default function App() {
         <header className="topbar">
           <div className="breadcrumb"><button className="breadcrumb-home" onClick={() => setPage("hall")}>档案馆大厅</button><ChevronRight size={13} /><strong>{navigation.find((item) => item.id === page)?.label}</strong></div>
           <div className="topbar-actions">
-            {staticDemo ? <span className="demo-notice"><FileClock size={14} />公开版 · 浏览器内计算</span> : !live && <span className="demo-notice"><FileClock size={14} />展示数据已标注</span>}
+            {staticDemo ? <span className="demo-notice"><FileClock size={14} />公开版，浏览器内计算</span> : !live && <span className="demo-notice"><FileClock size={14} />展示数据已标注</span>}
             {live && <span className="live-notice"><span className="pulse-dot online" />LIVE</span>}
             <a href="https://github.com/juanzhi-gcb/powercontext/tree/submit/qoder/qoder" target="_blank" rel="noreferrer" aria-label="打开代码仓库"><GitBranch size={17} /><span>Repository</span><ArrowUpRight size={13} /></a>
           </div>

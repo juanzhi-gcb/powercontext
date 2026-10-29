@@ -46,8 +46,9 @@ class FakeStore:
     def get_attempt(self, attempt_id):
         return self.attempt
 
-    def hybrid_retrieve(self, attempt, embedding, cutoff, limit=6):
+    def hybrid_retrieve(self, attempt, embedding, cutoff, limit=6, *, match_all=False):
         self.search_query = attempt
+        self.search_all = match_all
         return getattr(self, "candidates", [])[:limit]
 
     def evidence_for_attempts(self, attempt_ids, cutoff):

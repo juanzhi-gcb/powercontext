@@ -164,6 +164,14 @@ class SeekDBStore:
             self.add_evidence(attempt["id"], item.model_dump())
         return attempt
 
+    def update_scope(self, attempt_id: str, task: str, domain: str) -> None:
+        with self.connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE attempts SET task = %s, domain = %s WHERE id = %s",
+                (task, domain, attempt_id),
+            )
+            connection.commit()
+
     def add_evidence(self, attempt_id: str, evidence: dict[str, Any]) -> dict[str, Any]:
         with self.connect() as connection:
             with connection.cursor() as cursor:
@@ -302,16 +310,14 @@ class SeekDBStore:
         limit: int = 6,
         *,
         channels: tuple[str, ...] = ("vector", "fts"),
+        match_all: bool = False,
     ) -> list[dict[str, Any]]:
-        eligibility = (
-            "status = 'active' AND id <> %s AND available_at <= %s AND (task = %s OR domain = %s)"
-        )
-        shared = (
-            attempt["id"],
-            mysql_time(cutoff),
-            attempt["task"],
-            attempt["domain"],
-        )
+        conditions = ["status = 'active'", "id <> %s", "available_at <= %s"]
+        shared = (attempt["id"], mysql_time(cutoff))
+        if not match_all:
+            conditions.append("(task = %s OR domain = %s)")
+            shared = (*shared, attempt["task"], attempt["domain"])
+        eligibility = " AND ".join(conditions)
         with self.connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, title, mechanism, differentiator, task, domain, "

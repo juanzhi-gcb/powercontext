@@ -25,7 +25,7 @@ class AttemptCreate(BaseModel):
     idea: str = Field(min_length=10, max_length=12000)
     mechanism: str = Field(min_length=10, max_length=12000)
     task: str = Field(default="general", max_length=100)
-    domain: str = Field(default="research", max_length=100)
+    domain: str = Field(default="", max_length=100)
     failure_condition: str = Field(min_length=3, max_length=4000)
     assumptions: list[str] = Field(default_factory=list, max_length=20)
     competing_explanations: list[str] = Field(default_factory=list, max_length=20)
@@ -69,8 +69,8 @@ class ResearchSourceInput(BaseModel):
     locator: str = Field(min_length=1, max_length=1900)
     published_at: datetime
     source_type: Literal["paper", "log", "code_audit"] = "paper"
-    task: str = Field(default="research", max_length=100)
-    domain: str = Field(default="research", max_length=100)
+    task: str = Field(default="general", max_length=100)
+    domain: str = Field(default="", max_length=100)
 
     @field_validator("published_at")
     @classmethod

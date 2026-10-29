@@ -8,7 +8,6 @@ import {
   Database,
   FlaskConical,
   GitCompareArrows,
-  ShieldCheck,
   UserCheck,
   X,
 } from "lucide-react";
@@ -34,10 +33,10 @@ const reasonTitles: Record<string, string> = {
 const reasonSummaries: Record<string, string> = {
   MECHANISM_REPACKAGED: "最接近的历史机制高度相似，而当前提案没有说明改变了什么关键条件。换新数据集、基准或术语，不能单独构成新的机制贡献。",
   DETERMINISTIC_GATE_FAILED: "数据、模型版本、算力、存储或首轮验证预算至少有一项未通过固定检查。先补齐下面标出的条件，再决定是否继续。",
-  NO_LOCATABLE_HISTORICAL_EVIDENCE: "没有找到足够且可定位的历史证据。这里不是否定想法，而是建议先补充资料或缩小问题。",
+  NO_LOCATABLE_HISTORICAL_EVIDENCE: "没有找到足够且可定位的历史证据。先补充资料或缩小问题，再重新预检。",
   DIFFERENTIATED_MECHANISM: "当前提案声明了新的关键条件。不要直接扩大工程投入，先用下面的最小实验排除最强竞争解释。",
-  MECHANISM_RELATION_UNCERTAIN: "检索结果还不足以建立可靠的机制关系，不能把“没找到”理解为创新已经成立。",
-  COMPARISON_OUTPUT_INVALID: "机制比较包含了无效或无法定位的引用，因此这次结果不能作为实质裁决。",
+  MECHANISM_RELATION_UNCERTAIN: "检索结果还不足以建立可靠的机制关系。补一段更具体的机制描述，或换一个可对照的近邻再查。",
+  COMPARISON_OUTPUT_INVALID: "机制比较包含了无效或无法定位的引用。先修复引用，再重新预检。",
 };
 
 const checkLabels: Record<string, string> = {
@@ -95,16 +94,6 @@ function comparisonText(value: string) {
     : value;
 }
 
-function experimentText(label: string, value: string) {
-  if (label === "判别假设" && value.startsWith("The proposed mechanism differs")) return "验证声明的新条件是否确实造成了不同于历史机制的结果。";
-  if (label === "唯一干预") return "保持数据、模型、预算和评测不变，只改变声明的关键条件。";
-  if (label === "最强控制") return `优先运行最强竞争解释：${value.split(":").slice(1).join(":").trim()}`;
-  if (label === "预注册指标") return "开始之前，预注册一个机制判别指标和一个任务结果指标。";
-  if (label === "通过阈值") return "在首轮预算内，干预必须在判别指标上稳定优于最强控制。";
-  if (label === "停止条件") return "数据或模型版本未就绪、判别结果不明确，或者超出首轮预算时停止。";
-  return value;
-}
-
 export function ReportView({
   report,
   isDemo,
@@ -150,10 +139,6 @@ export function ReportView({
           <DecisionBadge decision={report.machine_decision} large />
           <h2>{reasonTitles[report.reason_code] ?? report.reason_code}</h2>
           <p>{reasonSummaries[report.reason_code] ?? report.summary}</p>
-          <div className="decision-note">
-            <ShieldCheck size={17} />
-            这是辅助判断，不会代替你的最终决定；证据不足也不会被当成否定想法。
-          </div>
         </div>
         <div className="decision-stats">
           <div><strong>{passed}</strong><span>通过检查</span></div>
@@ -206,7 +191,7 @@ export function ReportView({
             <span className="panel-count">{report.comparisons.length} 条</span>
           </div>
           {report.comparisons.length === 0 ? (
-            <div className="empty-state">没有符合 cutoff 与结构化条件的历史机制。系统返回证据不足，而不是把“没搜到”当成创新成立。</div>
+            <div className="empty-state">没有符合 cutoff 与结构化条件的历史机制。补一段更具体的机制描述，或把相关资料收进馆藏后再查。</div>
           ) : (
             <div className="comparison-list">
               {report.comparisons.map((comparison, index) => (
@@ -267,7 +252,7 @@ export function ReportView({
               ["预注册指标", report.minimal_experiment.metric],
               ["通过阈值", report.minimal_experiment.threshold],
               ["停止条件", report.minimal_experiment.stop_condition],
-            ].map(([label, value]) => <div key={label}><span>{label}</span><p>{experimentText(label, value)}</p></div>) }
+            ].map(([label, value]) => <div key={label}><span>{label}</span><p>{value}</p></div>) }
           </div>
         )}
       </section>

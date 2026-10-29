@@ -18,30 +18,26 @@ QODER = HERE.parents[2]
 SERVER = QODER / "server"
 sys.path.insert(0, str(SERVER))
 
+from nullpath.aliases import TASK_ALIASES, aliases_for  # noqa: E402
 from nullpath.embeddings import HashingEmbedder  # noqa: E402
 
-ALIASES = {
-    "moon": ["先验角色", "先验角色纠缠", "确认偏误", "confirmation bias", "跨方法", "单方法伪影", "prior-role", "cross-method"],
-    "ibml": ["可靠性", "互补性", "协作性能", "相图", "可识别性", "reliability", "complementarity", "collaboration", "phase diagram", "identifiability"],
-    "codealign": ["表示对齐", "代码迁移", "数据组成", "检查点", "representation alignment", "code alignment", "code transfer", "checkpoint"],
-    "attention": ["自注意力", "注意力机制", "长距离依赖", "循环结构", "序列转换", "self-attention", "attention", "recurrence", "long-range dependencies", "transformer", "sequence transduction"],
-    "bert": ["双向编码器", "预训练", "语言理解", "微调", "bidirectional", "pre-training", "language understanding", "fine-tune", "transformer", "transformers"],
+TASK_DOMAINS = {
+    "language-model-analysis": "model-interpretability",
+    "collaboration-analysis": "multi-agent-systems",
+    "code-alignment": "code-generation",
+    "retrieval-augmented-generation": "information-retrieval",
+    "multimodal-alignment": "multimodal",
+    "preference-optimization": "preference-optimization",
+    "time-series-foundation": "time-series",
+    "scientific-ml": "scientific-ml",
+    "speech-representation": "speech",
 }
-
 
 def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-def aliases_for(title: str) -> list[str]:
-    lowered = title.lower()
-    for key, values in ALIASES.items():
-        if key in lowered:
-            return values
-    return []
-
-
-def paper_record(fixture: Path, *, task: str, published: str, evidence_id: str) -> dict:
+def paper_record(fixture: Path, *, task: str, domain: str, published: str, evidence_id: str) -> dict:
     lines = fixture.read_text(encoding="utf-8").strip().splitlines()
     title = lines[0].lstrip("# ").strip()
     abstract_lines = []
@@ -60,9 +56,9 @@ def paper_record(fixture: Path, *, task: str, published: str, evidence_id: str) 
         "mechanism": abstract,
         "failure_condition": "External source record; no failure condition declared.",
         "task": task,
-        "domain": "research",
+        "domain": domain,
         "assumptions": [],
-        "search_terms": aliases_for(title),
+        "search_terms": aliases_for(title, task),
         "historical_decision": None,
         "available_at": published,
         "evidence": [
@@ -81,9 +77,18 @@ def paper_record(fixture: Path, *, task: str, published: str, evidence_id: str) 
 
 def main() -> None:
     archive = json.loads((QODER / "examples" / "archive.json").read_text(encoding="utf-8"))
+    external_path = QODER / "examples" / "external-records.json"
+    external = (
+        json.loads(external_path.read_text(encoding="utf-8"))
+        if external_path.exists()
+        else {"records": [], "sources": []}
+    )
     records = []
     for card in archive["cards"]:
         attempt = card["attempt"]
+        terms = aliases_for(attempt["title"], attempt["task"])
+        if any(item.get("source_type") == "paper" for item in card.get("evidence", [])):
+            terms = [*terms, *TASK_ALIASES.get(attempt["task"], [])]
         records.append(
             {
                 "id": slug(attempt["title"]),
@@ -94,7 +99,7 @@ def main() -> None:
                 "task": attempt["task"],
                 "domain": attempt["domain"],
                 "assumptions": attempt.get("assumptions", []),
-                "search_terms": aliases_for(attempt["title"]),
+                "search_terms": list(dict.fromkeys(terms)),
                 "historical_decision": card.get("historical_decision"),
                 "available_at": attempt["available_at"],
                 "evidence": card.get("evidence", []),
@@ -104,6 +109,7 @@ def main() -> None:
         paper_record(
             QODER / "evidence" / "library-import-fixture.md",
             task="language-model-analysis",
+            domain=TASK_DOMAINS["language-model-analysis"],
             published="2017-06-12T00:00:00Z",
             evidence_id="evidence-public-attention",
         )
@@ -112,10 +118,12 @@ def main() -> None:
         paper_record(
             QODER / "evidence" / "library-import-fixture-bert.md",
             task="language-model-analysis",
+            domain=TASK_DOMAINS["language-model-analysis"],
             published="2018-10-11T00:00:00Z",
             evidence_id="evidence-public-bert",
         )
     )
+    records.extend(external.get("records", []))
 
     embedder = HashingEmbedder(64)
     embeddings = {}
@@ -133,8 +141,9 @@ def main() -> None:
         embeddings[record["id"]] = embedder.embed(text)
 
     corpus = {
-        "version": "public-archive-2026-10-28",
+        "version": "public-archive-2026-10-28.7",
         "retrieval": "browser-vector-fts-rrf-v1",
+        "sources": external.get("sources", []),
         "records": records,
     }
     (WEB / "src" / "public-archive.json").write_text(
@@ -148,6 +157,7 @@ def main() -> None:
             {
                 "records": len(records),
                 "with_evidence": sum(1 for record in records if record["evidence"]),
+                "external": len(external.get("records", [])),
                 "embedding_version": embedder.version,
             }
         )

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, BookOpen, Info, LoaderCircle, LockKeyhole, Play } from "lucide-react";
 import type { AttemptInput, Report } from "../types";
 import { api, staticDemo } from "../api";
+import { domainForTask } from "../domains";
 import { evaluatePublicAttempt } from "../publicEngine";
 
 const example: AttemptInput = {
@@ -9,7 +10,7 @@ const example: AttemptInput = {
   idea: "Test when observable control statistics cannot identify reliability and complementarity separately.",
   mechanism: "Reliability and complementarity jointly determine collaboration performance, but observable control statistics may make the two factors unidentifiable.",
   task: "collaboration-analysis",
-  domain: "research",
+  domain: "multi-agent-systems",
   failure_condition: "A simple estimator identifies both factors or the observation restriction does not change the old conclusion.",
   assumptions: ["The observation map can be explicitly restricted"],
   competing_explanations: ["Simple weighted baseline", "Existing threshold estimator"],
@@ -27,8 +28,8 @@ const blank: AttemptInput = {
   title: "",
   idea: "",
   mechanism: "",
-  task: "research",
-  domain: "research",
+  task: "general",
+  domain: "",
   failure_condition: "如果核心机制在最小实验中不成立，或相对最强竞争解释没有可重复差异，则停止投入。",
   assumptions: [],
   competing_explanations: [],
@@ -63,11 +64,12 @@ export function NewPrecheck({ disabled, draft, onComplete }: { disabled: boolean
     setPending(true);
     setError("");
     try {
+      const input = { ...form, domain: domainForTask(form.task) };
       if (staticDemo) {
-        onComplete(await evaluatePublicAttempt(form));
+        onComplete(await evaluatePublicAttempt(input));
         return;
       }
-      const attempt = await api.createAttempt(form);
+      const attempt = await api.createAttempt(input);
       const report = await api.evaluate(attempt.id, new Date().toISOString());
       onComplete(report);
     } catch (reason) {
@@ -104,7 +106,7 @@ export function NewPrecheck({ disabled, draft, onComplete }: { disabled: boolean
               <label className="full-width">出现什么结果就应该停止？<textarea required rows={2} value={form.failure_condition} onChange={(e) => set("failure_condition", e.target.value)} /></label>
               <label>隐含假设（用分号分隔）<input value={form.assumptions.join("；")} onChange={(e) => set("assumptions", e.target.value.split(/[；;]/).filter(Boolean))} placeholder="例如：观察映射可以被显式限制" /></label>
               <label>最强竞争解释<input value={form.competing_explanations.join("；")} onChange={(e) => set("competing_explanations", e.target.value.split(/[；;]/).filter(Boolean))} placeholder="例如：简单加权基线也能解释结果" /></label>
-              <label>任务标识<input required value={form.task} onChange={(e) => set("task", e.target.value)} /><small>用于缩小历史检索范围；通用研究可保留 research。</small></label>
+              <label>任务标识<input required value={form.task} onChange={(e) => set("task", e.target.value)} /><small>用于按研究方向缩小检索范围；保留 general 表示检索全部馆藏。</small></label>
               <label>资料可用时间<input type="datetime-local" value={form.available_at.slice(0, 16)} onChange={(e) => set("available_at", new Date(e.target.value).toISOString())} /><small>历史回放时，不能早于这个时间评估该提案。</small></label>
             </div>
           </details>

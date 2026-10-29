@@ -27,6 +27,10 @@ export interface Comparison {
   mechanism_difference: string;
   evidence_ids: string[];
   evidence: Evidence[];
+  record_type?: string;
+  source?: string;
+  source_url?: string;
+  outcome?: string;
 }
 
 export interface CheckResult {
@@ -115,6 +119,13 @@ export interface HistoryResult {
   fts_score?: number;
   fused_score: number;
   evidence: Evidence[];
+  record_type?: string;
+  source?: string;
+  source_url?: string;
+  outcome?: string;
+  outcome_quote?: string;
+  original_doi?: string;
+  replication_doi?: string;
 }
 
 export interface HistorySearchResponse {

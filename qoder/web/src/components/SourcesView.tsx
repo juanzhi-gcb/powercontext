@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, Database, FileText, GitBranch, Library, LoaderCircle, LockKeyhole, Search, Upload } from "lucide-react";
 import { api, staticDemo } from "../api";
+import { RESEARCH_LINES, domainForTask } from "../domains";
 import type { ResearchSourceInput, SourceRecord } from "../types";
 
 const demoSources: SourceRecord[] = [
   {
     attempt_id: "source-demo-attention",
     title: "Attention Is All You Need",
-    task: "sequence-transduction",
-    domain: "research",
+    task: "language-model-analysis",
+    domain: "model-interpretability",
     available_at: "2017-06-12T00:00:00+00:00",
     evidence_count: 1,
     source_type: "paper",
@@ -28,6 +29,7 @@ export function SourcesView({ live, onSearch, onSecretary }: { live: boolean; on
   const [files, setFiles] = useState<File[]>([]);
   const [publishedDate, setPublishedDate] = useState(new Date().toISOString().slice(0, 10));
   const [sourceUrl, setSourceUrl] = useState("");
+  const [researchLine, setResearchLine] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -63,14 +65,15 @@ export function SourcesView({ live, onSearch, onSecretary }: { live: boolean; on
           locator: files.length === 1 && sourceUrl.trim() ? sourceUrl.trim() : `local-library/${path}`,
           published_at: new Date(`${publishedDate}T00:00:00Z`).toISOString(),
           source_type: "paper",
-          task: "research",
-          domain: "research",
+          task: researchLine || "general",
+          domain: domainForTask(researchLine),
         };
       }));
       const result = await api.importSources(inputs);
       setMessage(`已导入 ${result.imported} 个资料分段，跳过 ${result.skipped} 个重复分段。`);
       setFiles([]);
       setSourceUrl("");
+      setResearchLine("");
       form.reset();
       setSources(await api.listSources());
     } catch (reason) {
@@ -98,6 +101,7 @@ export function SourcesView({ live, onSearch, onSecretary }: { live: boolean; on
           </label>
           {files.length > 0 && <div className="source-file-list">{files.map((file) => <span key={`${file.name}-${file.lastModified}`}><FileText size={14} />{file.name}</span>)}</div>}
           <label>资料日期<input type="date" required value={publishedDate} disabled={!live || pending} onChange={(event) => setPublishedDate(event.target.value)} /><small>用于历史时间边界；请填写原文发表或记录形成日期，而不是默认导入日。</small></label>
+          <label>研究方向<select value={researchLine} disabled={!live || pending} onChange={(event) => setResearchLine(event.target.value)}><option value="">未分类（仅全馆检索）</option>{RESEARCH_LINES.map((line) => <option key={line} value={line}>{line}</option>)}</select><small>选择方向后，资料会进入该方向的历史检索范围。</small></label>
           <label>原始出处链接（单文件可选）<input type="url" value={sourceUrl} disabled={!live || pending} onChange={(event) => setSourceUrl(event.target.value)} placeholder="https://arxiv.org/abs/…" /><small>填写论文或报告的原始链接；留空则使用本地文件名。批量导入时分别使用各文件名。</small></label>
           <button className="button button-accent" disabled={!live || pending}>
             {pending ? <LoaderCircle className="spin" size={17} /> : <Database size={17} />}
@@ -120,7 +124,7 @@ export function SourcesView({ live, onSearch, onSecretary }: { live: boolean; on
         <div className="source-record-list">{sources.map((source) => <article className="source-record" key={source.attempt_id}>
           <FileText size={18} />
           <div><h3>{source.title}</h3>{/^https?:\/\//.test(source.locator) ? <a href={source.locator} target="_blank" rel="noreferrer">{source.locator}</a> : <code>{source.locator}</code>}</div>
-          <div className="source-record-meta"><span>{source.source_type} · {source.evidence_count} 条证据</span><time>{source.published_at.slice(0, 10)}</time></div>
+          <div className="source-record-meta"><span>{source.source_type}，{source.evidence_count} 条证据</span><time>{source.published_at.slice(0, 10)}</time></div>
         </article>)}</div>
       </section>
     </div>

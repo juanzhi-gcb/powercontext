@@ -114,10 +114,45 @@ def test_identical_mechanism_without_differentiator_is_repackaged():
 def test_differentiated_mechanism_requires_minimum_experiment():
     report = run(attempt())
     assert report["machine_decision"] == "CONDITIONAL_GO"
-    assert (
-        report["minimal_experiment"]["control"]
-        == "Run the strongest competing explanation: Weighted baseline"
+    experiment = report["minimal_experiment"]
+    assert "Weighted baseline" in experiment["control"]
+    assert "strongest trivial baseline" not in experiment["control"]
+
+
+def test_minimal_experiment_quotes_input_and_history():
+    experiment = run(attempt())["minimal_experiment"]
+    assert "Restrict the observation map" in experiment["hypothesis"]
+    assert "Historical" in experiment["hypothesis"]
+    assert "Restrict the observation map" in experiment["intervention"]
+    assert "A trivial estimator explains the observation" in experiment["stop_condition"]
+    assert "24h" in experiment["stop_condition"]
+
+
+def test_missing_differentiator_names_the_gap():
+    experiment = run(attempt(differentiator=""))["minimal_experiment"]
+    assert "尚未声明差异" in experiment["hypothesis"]
+    assert "待补" in experiment["intervention"]
+
+
+def test_missing_competing_explanation_uses_history_as_control():
+    report = run(attempt(competing_explanations=[]))
+    assert "Historical" in report["minimal_experiment"]["control"]
+
+
+def test_experiment_ignores_history_without_evidence():
+    report = run(attempt(competing_explanations=[]), evidence_by_attempt={"historical": []})
+    assert "待补" in report["minimal_experiment"]["control"]
+
+
+def test_experiment_ignores_unrelated_history():
+    report = run(
+        attempt(competing_explanations=[]),
+        candidates=[candidate(mechanism="A forecasting transformer trained on weather series.")],
     )
+    experiment = report["minimal_experiment"]
+    assert "Historical" not in experiment["hypothesis"]
+    assert "Historical" not in experiment["intervention"]
+    assert "待补" in experiment["control"]
 
 
 def test_no_evidence_is_not_a_negative_verdict():
